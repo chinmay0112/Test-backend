@@ -36,3 +36,16 @@ class TestDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Test
         fields = ['id', 'title', 'duration_minutes', 'sections']
+
+
+from .models import UserResponse
+
+class UserResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserResponse
+        fields = ['user', 'test', 'question', 'selected_answer', 'marked_for_review']
+
+class QuestionResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation']
