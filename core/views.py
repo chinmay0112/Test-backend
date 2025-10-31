@@ -1,7 +1,7 @@
 # core/views.py
 from rest_framework import generics
-from .models import Test, TestSeries, Question, User, TestResult
-from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestDetailSerializer
+from .models import CustomUser,Test, TestSeries, Question, User, TestResult
+from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestDetailSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -109,7 +109,9 @@ class SubmitTestView(APIView):
         return Response(final_report, status=status.HTTP_200_OK)
 
 
-         
+class RegisterView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer         
       
 
 
