@@ -173,7 +173,7 @@ JAZZMIN_SETTINGS = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
-    "http://127.0.0.1:4200",
+    "http://127.0.0.1:4200","https://test-backend-qb46.onrender.com"
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
