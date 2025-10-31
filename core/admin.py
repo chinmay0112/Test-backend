@@ -1,6 +1,6 @@
 # core/admin.py
 from django.contrib import admin
-from .models import ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult
+from .models import CustomUser, ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult
 
 # --- Notice we are inheriting from admin.ModelAdmin ---
 @admin.register(Question)
@@ -38,3 +38,4 @@ admin.site.register(ExamName)
 admin.site.register(TestSeries)
 admin.site.register(Test)
 admin.site.register(Section)
+admin.site.register(CustomUser)

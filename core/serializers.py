@@ -1,8 +1,25 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import  TestSeries, Test, Section, Question
-from django.contrib.auth.models import User
+from .models import CustomUser,  TestSeries, Test, Section, Question
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'email', 'username', 'phone', 'full_name', 'password')
+        extra_kwargs={
+            'password':{'write_only':True}
+        }
+    def create(self, validated_data):
+        # Call the special create_user method from your CustomUserManager
+        user = CustomUser.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            phone=validated_data['phone'],
+            full_name=validated_data['full_name'],
+            password=validated_data['password']
+        )
+        return user
 
 
 class TestSeriesListSerializer(serializers.ModelSerializer):
