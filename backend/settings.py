@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['test-backend-qb46.onrender.com', "localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-dee92.up.railway.app",
+    "https://web-production-dee92.up.railway.app","https://examprepare.netlify.app"
 ]
 # Application definition
 
@@ -173,7 +173,7 @@ JAZZMIN_SETTINGS = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
-    "http://127.0.0.1:4200","https://examprepare.netlify.app "
+    "http://127.0.0.1:4200","https://examprepare.netlify.app"
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
