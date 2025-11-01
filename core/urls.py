@@ -12,7 +12,7 @@ urlpatterns = [
     path('tests/<int:pk>/', TestDetailView.as_view()),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-path('users/name', UserDetailView.as_view(), name = 'user-detail')
+path('users/name/', UserDetailView.as_view(), name = 'user-detail')
 
 
 
