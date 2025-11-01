@@ -32,11 +32,11 @@ class TestDetailView(generics.RetrieveAPIView):
 # ... keep your TestDetailView and other views ...
 
 class SubmitTestView(APIView):
-    # permission_classes = [permissions.IsAuthenticated] # Good to add this back later
+    permission_classes = [permissions.IsAuthenticated] # Good to add this back later
 
     def post(self, request, pk, format=None):
         test = get_object_or_404(Test,pk=pk)
-        user = User.objects.get(pk=1)
+        user = User.objects.get(pk=pk)
         answers = request.data.get('responses',[])
         score =0.0
         correct_count=0
@@ -114,4 +114,8 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer         
       
 
-
+class UserDetailView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes=[permissions.IsAuthenticated]
+    def get_object(self):
+       return self.request.user 
