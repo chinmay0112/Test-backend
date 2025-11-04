@@ -33,7 +33,14 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.sites',
+    'allauth.account', 
+    'allauth.socialaccount',  # <-- This one creates "Social applications"
+    'allauth.socialaccount.providers.google',
+    'allauth',
     'corsheaders',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,18 +52,38 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt'
 ]
+SITE_ID = 1
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-        'whitenoise.middleware.WhiteNoiseMiddleware',  # add here, just after security middleware
-
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', # <-- Kept this one
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware', # <-- Kept this one
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # <-- allauth's middleware
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -139,7 +166,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
-
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': None,
+    'JWT_AUTH_REFRESH_COOKIE': None,
+    'TOKEN_MODEL': None,
+    'REGISTER_SERIALIZER': 'core.serializers.CustomRegisterSerializer',
+}
 JAZZMIN_SETTINGS = {
       "order_with_respect_to": [
         # Top-level concepts first
@@ -178,3 +211,5 @@ CORS_ALLOWED_ORIGINS = [
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 AUTH_USER_MODEL = 'core.CustomUser'
+# This tells allauth to skip that confirmation page and redirect directly to Google.
+SOCIALACCOUNT_LOGIN_ON_GET = True

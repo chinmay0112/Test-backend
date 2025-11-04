@@ -2,7 +2,7 @@
 from rest_framework import serializers
 # Make sure to import all your models, including Section
 from .models import CustomUser,  TestSeries, Test, Section, Question
-
+from dj_rest_auth.registration.serializers import RegisterSerializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -66,3 +66,22 @@ class QuestionResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation']
+
+class CustomRegisterSerializer(RegisterSerializer):
+    # These are the extra fields your form will send
+            username = serializers.CharField(max_length=150)
+            full_name = serializers.CharField(max_length=255)
+            phone = serializers.CharField(max_length=15)
+
+    # This method is the "magic" that connects your new fields
+    # to your CustomUser model's create_user method.
+            def get_cleaned_data(self):
+        # Get the default data (email, password)
+                data = super().get_cleaned_data()
+
+        # Add your custom fields from the validated data
+                data['username'] = self.validated_data.get('username', '')
+                data['full_name'] = self.validated_data.get('full_name', '')
+                data['phone'] = self.validated_data.get('phone', '')
+
+                return data

@@ -17,10 +17,26 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import path, include # Make sure to import include
-
-
+from core.views import GoogleLogin
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('core.urls'))
+    path('api/', include('core.urls')),
+   # This path is for Email/Password Login
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    
+    # This is your Google Login
+    path('api/auth/google/', GoogleLogin.as_view(), name='google_login'),
+    
+    # This is for refreshing the token
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # This uses the dj-rest-auth library for registration
+    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+
+   
 
 ]
