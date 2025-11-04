@@ -1,12 +1,14 @@
 # core/views.py
 from rest_framework import generics
-from .models import CustomUser,Test, TestSeries, Question, User, TestResult
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from dj_rest_auth.registration.views import SocialLoginView
+from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse
 from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestDetailSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
-from .models import Test, Question, UserResponse # Use your UserResponse model
 class TestSeriesListView(generics.ListAPIView):
     queryset = TestSeries.objects.all()
     serializer_class = TestSeriesListSerializer
@@ -23,20 +25,13 @@ class TestDetailView(generics.RetrieveAPIView):
     queryset = Test.objects.all()
     serializer_class = TestDetailSerializer
 
-
-
-# core/views.py
-
-# ... import other models and serializers ...
-
-# ... keep your TestDetailView and other views ...
-
 class SubmitTestView(APIView):
-    permission_classes = [permissions.IsAuthenticated] # Good to add this back later
+    # permission_classes = [permissions.IsAuthenticated] # Good to add this back later
 
     def post(self, request, pk, format=None):
         test = get_object_or_404(Test,pk=pk)
-        user = User.objects.get(pk=pk)
+        # user = request.user ##use when using production
+        user = CustomUser.objects.get(pk=1) # Use the hardcoded admin user
         answers = request.data.get('responses',[])
         score =0.0
         correct_count=0
@@ -109,13 +104,20 @@ class SubmitTestView(APIView):
         return Response(final_report, status=status.HTTP_200_OK)
 
 
-class RegisterView(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = UserSerializer         
+# class RegisterView(generics.CreateAPIView):
+#     queryset = CustomUser.objects.all()
+#     serializer_class = UserSerializer         
       
 
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes=[permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all() 
+
     def get_object(self):
        return self.request.user 
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = "http://localhost:4200"
+    client_class = OAuth2Client  
