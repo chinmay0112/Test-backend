@@ -8,9 +8,9 @@ class CustomUserManager(BaseUserManager):
         Creates and saves a User with the given email, username, phone, and password.
         """
         if not email:
-            email = None  # store as NULL, not empty string
-        else:
-            email = self.normalize_email(email.strip())
+            raise ValueError('The Email field must be set') # <-- This line is correct
+        
+        email = self.normalize_email(email.strip()) # <-- Use strip() here
        
         user = self.model(first_name=first_name,last_name=last_name ,email=email, phone=phone, **extra_fields)
         user.set_password(password) # This hashes the password securely
@@ -34,8 +34,8 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
-    email = models.EmailField(unique=True, null=True, blank=True) # Use email for login
-    phone = models.CharField(max_length=15, unique=True, null=True, blank=True) # Added phone field
+    email = models.EmailField(unique=True) # Use email for login
+    phone = models.CharField(max_length=15, unique=True) # Added phone field
     
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
