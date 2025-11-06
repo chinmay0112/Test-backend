@@ -6,20 +6,9 @@ from dj_rest_auth.registration.serializers import RegisterSerializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'username', 'phone', 'full_name', 'password')
-        extra_kwargs={
-            'password':{'write_only':True}
-        }
-    def create(self, validated_data):
-        # Call the special create_user method from your CustomUserManager
-        user = CustomUser.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            phone=validated_data['phone'],
-            full_name=validated_data['full_name'],
-            password=validated_data['password']
-        )
-        return user
+        # These are the "safe" fields to show to a logged-in user
+        fields = ('id', 'email', 'phone', 'first_name', 'last_name')
+        # We DO NOT include 'password' here
 
 
 class TestSeriesListSerializer(serializers.ModelSerializer):
@@ -69,8 +58,8 @@ class QuestionResultSerializer(serializers.ModelSerializer):
 
 class CustomRegisterSerializer(RegisterSerializer):
     # These are the extra fields your form will send
-            username = serializers.CharField(max_length=150)
-            full_name = serializers.CharField(max_length=255)
+            first_name = serializers.CharField(max_length=255)
+            last_name = serializers.CharField(max_length=255)
             phone = serializers.CharField(max_length=15)
 
     # This method is the "magic" that connects your new fields
@@ -80,7 +69,6 @@ class CustomRegisterSerializer(RegisterSerializer):
                 data = super().get_cleaned_data()
 
         # Add your custom fields from the validated data
-                data['username'] = self.validated_data.get('username', '')
                 data['full_name'] = self.validated_data.get('full_name', '')
                 data['phone'] = self.validated_data.get('phone', '')
 
