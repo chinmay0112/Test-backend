@@ -8,9 +8,9 @@ class CustomUserManager(BaseUserManager):
         Creates and saves a User with the given email, username, phone, and password.
         """
         if not email:
-            raise ValueError('The Email field must be set')
-        
-        email = self.normalize_email(email)
+            email = None  # store as NULL, not empty string
+        else:
+            email = self.normalize_email(email.strip())
        
         user = self.model(first_name=first_name,last_name=last_name ,email=email, phone=phone, **extra_fields)
         user.set_password(password) # This hashes the password securely
