@@ -61,16 +61,15 @@ class CustomRegisterSerializer(RegisterSerializer):
     # These are the extra fields your form will send
             first_name = serializers.CharField(max_length=255)
             last_name = serializers.CharField(max_length=255)
-           
-            phone = serializers.CharField(
-        max_length=15,
-        validators=[
-            UniqueValidator(
-                queryset=CustomUser.objects.all(),
-                message="A user with this phone number already exists."
-            )
-        ]
-    )
+            phone = serializers.CharField(max_length=15)
+            def validate_phone(self, value):
+        # Check if a user with this phone number already exists
+                if CustomUser.objects.filter(phone=value).exists():
+            # If yes, raise a clean validation error
+                    raise serializers.ValidationError("A user with this phone number already exists.")
+        # If no, just return the value
+                return value
+            
     # This method is the "magic" that connects your new fields
     # to your CustomUser model's create_user method.
             def get_cleaned_data(self):
