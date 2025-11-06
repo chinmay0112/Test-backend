@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User,BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.conf import settings
 class CustomUserManager(BaseUserManager):
-    def create_user(self,full_name,email,username,phone,password=None,**extra_fields):
+    def create_user(self,first_name,last_name,email,phone,password=None,**extra_fields):
         """
         Creates and saves a User with the given email, username, phone, and password.
         """
@@ -12,13 +12,13 @@ class CustomUserManager(BaseUserManager):
         
         email = self.normalize_email(email)
        
-        user = self.model(full_name=full_name,email=email, username=username, phone=phone, **extra_fields)
+        user = self.model(first_name=first_name,last_name=last_name ,email=email, phone=phone, **extra_fields)
         user.set_password(password) # This hashes the password securely
         user.save(using=self._db)
         return user
-    def create_superuser(self,full_name, email, username, phone, password=None, **extra_fields):
+    def create_superuser(self,first_name, last_name,email, phone, password=None, **extra_fields):
         """
-        Creates and saves a superuser with the given email, username, phone, and password.
+        Creates and saves a superuser with the given email, phone, and password.
         """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -29,12 +29,12 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
         
-        return self.create_user(full_name,email, username, phone, password, **extra_fields)
+        return self.create_user(first_name,last_name,email, phone, password, **extra_fields)
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    full_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
     email = models.EmailField(unique=True) # Use email for login
-    username = models.CharField(max_length=150, unique=True)
     phone = models.CharField(max_length=15, unique=True) # Added phone field
     
     is_staff = models.BooleanField(default=False)
@@ -43,7 +43,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager() # Use the manager we just defined
 
     USERNAME_FIELD = 'email' # Use email to log in
-    REQUIRED_FIELDS = ['full_name','username', 'phone'] # Required fields for 'createsuperuser'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone'] # Required fields for 'createsuperuser'
 
     def __str__(self):
         return self.email
@@ -86,10 +86,10 @@ class Section(models.Model):
 class Question(models.Model):
     section = models.ForeignKey(Section,related_name='questions',on_delete=models.CASCADE)
     question_text = models.TextField()
-    option_a = models.CharField(max_length=15)
-    option_b = models.CharField(max_length=15)
-    option_c = models.CharField(max_length=15)
-    option_d = models.CharField(max_length=15)
+    option_a = models.CharField(max_length=255)
+    option_b = models.CharField(max_length=255)
+    option_c = models.CharField(max_length=255)
+    option_d = models.CharField(max_length=255)
     correct_option = models.CharField(max_length=1,choices=[('a','A'), ('b','B'), ('c','C'), ('d','D')])
     explanation = models.TextField(blank=True)
 
@@ -108,11 +108,11 @@ class Question(models.Model):
 class TestResult(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
-    score = models.IntegerField()
+    score = models.DecimalField(max_digits=6, decimal_places=2)
     completed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.test.title}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.test.title}"
 
 
 # --- THIS IS THE CORRECTED MODEL ---

@@ -23,13 +23,13 @@ class UserResponseInline(admin.TabularInline):
 class TestResultAdmin(admin.ModelAdmin): # <-- Corrected here
     list_display = ('id', 'submission_summary', 'score', 'completed_at')
     list_filter = ('test', 'user')
-    search_fields = ('user__username', 'test__title')
+    search_fields = ('user__email', 'test__title')
     list_display_links = ('submission_summary',)
     inlines = [UserResponseInline]
 
     # This custom method is correct
     def submission_summary(self, obj):
-        return f"{obj.user.username} - {obj.test.title}"
+        return f"{obj.user.first_name} - {obj.test.title}"
     submission_summary.short_description = 'Submission'
 
 

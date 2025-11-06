@@ -213,3 +213,4 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 AUTH_USER_MODEL = 'core.CustomUser'
 # This tells allauth to skip that confirmation page and redirect directly to Google.
 SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
