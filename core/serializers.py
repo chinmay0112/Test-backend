@@ -69,7 +69,8 @@ class CustomRegisterSerializer(RegisterSerializer):
                 data = super().get_cleaned_data()
 
         # Add your custom fields from the validated data
-                data['full_name'] = self.validated_data.get('full_name', '')
+                data['first_name'] = self.validated_data.get('first_name', '')
+                data['last_name'] = self.validated_data.get('last_name', '')
                 data['phone'] = self.validated_data.get('phone', '')
 
                 return data
