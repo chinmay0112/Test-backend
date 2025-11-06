@@ -3,6 +3,7 @@ from rest_framework import serializers
 # Make sure to import all your models, including Section
 from .models import CustomUser,  TestSeries, Test, Section, Question
 from dj_rest_auth.registration.serializers import RegisterSerializer
+from rest_framework.validators import UniqueValidator
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -60,8 +61,16 @@ class CustomRegisterSerializer(RegisterSerializer):
     # These are the extra fields your form will send
             first_name = serializers.CharField(max_length=255)
             last_name = serializers.CharField(max_length=255)
-            phone = serializers.CharField(max_length=15)
-
+           
+            phone = serializers.CharField(
+        max_length=15,
+        validators=[
+            UniqueValidator(
+                queryset=CustomUser.objects.all(),
+                message="A user with this phone number already exists."
+            )
+        ]
+    )
     # This method is the "magic" that connects your new fields
     # to your CustomUser model's create_user method.
             def get_cleaned_data(self):
