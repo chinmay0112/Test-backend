@@ -70,6 +70,15 @@ class CustomRegisterSerializer(RegisterSerializer):
             )
         ]
     )
+            email = serializers.CharField(
+        max_length=255,
+        validators=[
+            UniqueValidator(
+                queryset=CustomUser.objects.all(),
+                message="A user with this email already exists."
+            )
+        ]
+    )
             
     # This method is the "magic" that connects your new fields
     # to your CustomUser model's create_user method.
@@ -80,6 +89,8 @@ class CustomRegisterSerializer(RegisterSerializer):
         # Add your custom fields from the validated data
                 data['first_name'] = self.validated_data.get('first_name', '')
                 data['last_name'] = self.validated_data.get('last_name', '')
-                data['phone'] = self.validated_data.get('phone', '')
+                data['phone'] = self.validated_data.get('phone', ''),
+                data['email'] = self.validated_data.get('email', '')
+
 
                 return data
