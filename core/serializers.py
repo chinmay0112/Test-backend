@@ -4,6 +4,8 @@ from rest_framework import serializers
 from .models import CustomUser,  TestSeries, Test, Section, Question
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
+from django.core.validators import RegexValidator
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -58,56 +60,68 @@ class QuestionResultSerializer(serializers.ModelSerializer):
         fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation']
 
 class CustomRegisterSerializer(RegisterSerializer):
-    first_name = serializers.CharField(max_length=255)
-    last_name = serializers.CharField(max_length=255)
+    first_name = serializers.CharField(max_length=255, required=True)
+    last_name = serializers.CharField(max_length=255, required=True)
+
     phone = serializers.CharField(
         max_length=15,
         required=False,
         allow_blank=True,
         validators=[
+            RegexValidator(
+                regex=r'^\+?\d{7,15}$',
+                message="Enter a valid phone number (7–15 digits, optional +)."
+            ),
             UniqueValidator(
                 queryset=CustomUser.objects.all(),
                 message="A user with this phone number already exists."
-            )
-        ]
+            ),
+        ],
     )
+
     email = serializers.EmailField(
         required=True,
         validators=[
             UniqueValidator(
                 queryset=CustomUser.objects.all(),
                 message="A user with this email already exists."
-            )
-        ]
+            ),
+        ],
     )
 
     def validate_phone(self, value):
-        # Normalize blanks -> None so DB can store NULL instead of empty string
-        if value is None:
-            return None
-        v = str(value).strip()
-        if v == "":
-            return None
-        return v
+        """
+        Normalize blanks -> None so DB can store NULL instead of empty string.
+        """
+        if value:
+            v = str(value).strip()
+            return v if v else None
+        return None
 
     def get_cleaned_data(self):
+        """
+        Combine parent cleaned data with our custom fields.
+        """
         data = super().get_cleaned_data()
-        # Put validated values into cleaned data used by dj-rest-auth to create the user
-        data['first_name'] = self.validated_data.get('first_name', '')
-        data['last_name'] = self.validated_data.get('last_name', '')
-        # phone may be None
-        data['phone'] = self.validated_data.get('phone', None)
-        data['email'] = self.validated_data.get('email', '')
+        data.update({
+            'first_name': self.validated_data.get('first_name', ''),
+            'last_name': self.validated_data.get('last_name', ''),
+            'phone': self.validated_data.get('phone', None),
+            'email': self.validated_data.get('email', ''),
+        })
         return data
 
     def save(self, request):
-        # Let parent create user (handles password hashing etc.)
+        """
+        Create user and assign extra fields.
+        """
         user = super().save(request)
-        # Ensure other fields are set on the created user and saved
         user.first_name = self.validated_data.get('first_name', '')
         user.last_name = self.validated_data.get('last_name', '')
-        user.phone = self.validated_data.get('phone', None)
-        # email already set by parent, but set again to be sure
+        phone = self.validated_data.get('phone', None)
+
+        # Store NULL (not '') for phone if not provided
+        user.phone = phone if phone else None
         user.email = self.validated_data.get('email', user.email)
         user.save()
         return user
