@@ -58,11 +58,12 @@ class QuestionResultSerializer(serializers.ModelSerializer):
         fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation']
 
 class CustomRegisterSerializer(RegisterSerializer):
-    # These are the extra fields your form will send
-            first_name = serializers.CharField(max_length=255)
-            last_name = serializers.CharField(max_length=255)
-            phone = serializers.CharField(
+    first_name = serializers.CharField(max_length=255)
+    last_name = serializers.CharField(max_length=255)
+    phone = serializers.CharField(
         max_length=15,
+        required=False,
+        allow_blank=True,
         validators=[
             UniqueValidator(
                 queryset=CustomUser.objects.all(),
@@ -70,8 +71,8 @@ class CustomRegisterSerializer(RegisterSerializer):
             )
         ]
     )
-            email = serializers.CharField(
-        max_length=255,
+    email = serializers.EmailField(
+        required=True,
         validators=[
             UniqueValidator(
                 queryset=CustomUser.objects.all(),
@@ -79,18 +80,34 @@ class CustomRegisterSerializer(RegisterSerializer):
             )
         ]
     )
-            
-    # This method is the "magic" that connects your new fields
-    # to your CustomUser model's create_user method.
-            def get_cleaned_data(self):
-        # Get the default data (email, password)
-                data = super().get_cleaned_data()
 
-        # Add your custom fields from the validated data
-                data['first_name'] = self.validated_data.get('first_name', '')
-                data['last_name'] = self.validated_data.get('last_name', '')
-                data['phone'] = self.validated_data.get('phone', '')
-                data['email'] = self.validated_data.get('email', '')
+    def validate_phone(self, value):
+        # Normalize blanks -> None so DB can store NULL instead of empty string
+        if value is None:
+            return None
+        v = str(value).strip()
+        if v == "":
+            return None
+        return v
 
+    def get_cleaned_data(self):
+        data = super().get_cleaned_data()
+        # Put validated values into cleaned data used by dj-rest-auth to create the user
+        data['first_name'] = self.validated_data.get('first_name', '')
+        data['last_name'] = self.validated_data.get('last_name', '')
+        # phone may be None
+        data['phone'] = self.validated_data.get('phone', None)
+        data['email'] = self.validated_data.get('email', '')
+        return data
 
-                return data
+    def save(self, request):
+        # Let parent create user (handles password hashing etc.)
+        user = super().save(request)
+        # Ensure other fields are set on the created user and saved
+        user.first_name = self.validated_data.get('first_name', '')
+        user.last_name = self.validated_data.get('last_name', '')
+        user.phone = self.validated_data.get('phone', None)
+        # email already set by parent, but set again to be sure
+        user.email = self.validated_data.get('email', user.email)
+        user.save()
+        return user

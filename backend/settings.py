@@ -183,8 +183,10 @@ REST_AUTH = {
     'JWT_AUTH_COOKIE': None,
     'JWT_AUTH_REFRESH_COOKIE': None,
     'TOKEN_MODEL': None,
-    'REGISTER_SERIALIZER': 'core.serializers.CustomRegisterSerializer',
+        'REGISTER_SERIALIZER': 'core.serializers.CustomRegisterSerializer',
+
 }
+
 JAZZMIN_SETTINGS = {
       "order_with_respect_to": [
         # Top-level concepts first
