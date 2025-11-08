@@ -65,8 +65,7 @@ class CustomRegisterSerializer(RegisterSerializer):
 
     phone = serializers.CharField(
         max_length=15,
-        required=False,
-        allow_blank=True,
+       required=True,
         validators=[
             RegexValidator(
                 regex=r'^\+?\d{7,15}$',
@@ -90,13 +89,9 @@ class CustomRegisterSerializer(RegisterSerializer):
     )
 
     def validate_phone(self, value):
-        """
-        Normalize blanks -> None so DB can store NULL instead of empty string.
-        """
-        if value:
-            v = str(value).strip()
-            return v if v else None
-        return None
+        if not value or not str(value).strip():
+            raise serializers.ValidationError("Phone number is required.")
+        return str(value).strip()
 
     def get_cleaned_data(self):
         """
