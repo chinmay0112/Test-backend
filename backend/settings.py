@@ -103,6 +103,17 @@ TEMPLATES = [
         },
     },
 ]
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),  # ⏰ Access token expires after 1 minute
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),    # Refresh token lasts 7 days
+    "ROTATE_REFRESH_TOKENS": True,                  # (optional) rotates refresh token on every refresh
+    "BLACKLIST_AFTER_ROTATION": True,               # blacklists old refresh tokens
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
