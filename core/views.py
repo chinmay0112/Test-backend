@@ -182,5 +182,32 @@ class GoogleLogin(APIView):
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-            },
+                "phone":user.phone,
+            },"needs_profile": (
+        user.phone is None or
+        not user.first_name or
+        not user.last_name
+    )
         })
+    
+class CompleteProfile(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+        phone = request.data.get("phone")
+
+        if not first_name or not last_name or not phone:
+            return Response({"error": "All fields are required"}, status=400)
+
+        if User.objects.exclude(id=user.id).filter(phone=phone).exists():
+            return Response({"error": "Phone already exists"}, status=400)
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.phone = phone
+        user.save()
+
+        return Response({"message": "Profile completed successfully"})
