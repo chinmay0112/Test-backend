@@ -128,7 +128,7 @@ User = get_user_model()
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET =os.getenv('GOOGLE_CLIENT_SECRET')
-REDIRECT_URI = "http://localhost:4200/google-callback"
+REDIRECT_URI = "https://examprepare.netlify.app/google-callback"
 class GoogleLogin(APIView):
     def post(self, request):
         code = request.data.get("code")
