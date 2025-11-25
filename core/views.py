@@ -11,9 +11,9 @@ from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
-
+import razorpay
 import requests,os
-
+from django.conf import settings
 class TestSeriesListView(generics.ListAPIView):
     queryset = TestSeries.objects.all()
     serializer_class = TestSeriesListSerializer
@@ -211,3 +211,70 @@ class CompleteProfile(APIView):
         user.save()
 
         return Response({"message": "Profile completed successfully"})
+
+class CreateOrderView(APIView):
+    permission_classes =[permissions.IsAuthenticated]
+
+    def post(self,request):
+        user = request.user
+        plan_id = request.data.get('plan_id')
+        amount = 0
+        if plan_id == 'pro_monthly':
+            amount = 29900
+        elif plan_id == 'pro_yearly':
+            amount = 249900
+        else:
+            return Response({'error':'Invalid plan ID'}, status = status.HTTP_400_BAD_REQUEST)
+        
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        try:
+            order=client.order.create({
+                "amount":amount,
+                "currency":"INR",
+                "receipt":f"receipt_user_{user.id}_{plan_id}",
+                "payment_capture":1
+            })
+            return Response({
+                "order_id":order['id'],
+                "amount":amount,
+                "currency":"INR",
+                'key_id': settings.RAZORPAY_KEY_ID, # Frontend needs this public key
+                'user_email': user.email,
+
+            },status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response ({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class VerifyPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+
+        # 1. Get the 3 pieces of payment data sent from the Angular client
+        payment_id = data.get('razorpay_payment_id')
+        order_id = data.get('razorpay_order_id')
+        signature = data.get('razorpay_signature')
+
+        if not all([payment_id, order_id, signature]):
+            return Response({"error": "Missing payment details"}, status=status.HTTP_400_BAD_REQUEST)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        # 2. CRUCIAL SECURITY CHECK: Verify the signature
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': order_id,
+                'razorpay_payment_id': payment_id,
+                'razorpay_signature': signature
+            })
+        except razorpay.errors.SignatureVerificationError:
+            return Response({"error": "Invalid payment signature"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. If signature is valid, grant the user access
+        user = request.user
+        user.is_pro_member = True # This grants the Pro status
+        user.save()
+
+        return Response({"status": "success", "message": "Payment verified and user upgraded!"}, status=status.HTTP_200_OK)
