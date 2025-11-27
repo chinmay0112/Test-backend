@@ -183,6 +183,7 @@ class GoogleLogin(APIView):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "phone":user.phone,
+                "is_pro_member": user.is_pro_member,
             },"needs_profile": (
         user.phone is None or
         not user.first_name or

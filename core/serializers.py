@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         # These are the "safe" fields to show to a logged-in user
-        fields = ('id', 'email', 'phone', 'first_name', 'last_name')
+        fields = ('id', 'email', 'phone', 'first_name', 'last_name','is_pro_member')
         # We DO NOT include 'password' here
 
 
