@@ -39,7 +39,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    
+    is_pro_member = models.BooleanField(default=False)
     objects = CustomUserManager() # Use the manager we just defined
 
     USERNAME_FIELD = 'email' # Use email to log in
