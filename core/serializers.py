@@ -159,7 +159,7 @@ class TestStatusSerializer(serializers.ModelSerializer):
 class TestSeriesDetailSerializer(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
     # This is the line you asked about:
-    tests = TestStatusSerializer(many=True, read_only=True) 
+    tests = TestStatusSerializer(many=True, read_only=True,source='test_set') 
     testsCompleted = serializers.SerializerMethodField()
     testsTotal = serializers.SerializerMethodField()
 
@@ -176,7 +176,7 @@ class TestSeriesDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_testsTotal(self, obj):
-        return obj.tests.count()
+        return obj.test_set.count()
 
     def get_testsCompleted(self, obj):
         user = self.context.get('request').user
