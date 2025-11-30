@@ -135,10 +135,10 @@ class TestStatusSerializer(serializers.ModelSerializer):
                 'marks_correct',
                 'status',
                 'resultId']
-        def get_number_of_questions(self,obj):
+    def get_number_of_questions(self,obj):
             total = obj.sections.aggregate(total_q = Sum('number_of_questions'))['total_q']
             return total or 0
-        def get_user_result(self, obj):
+    def get_user_result(self, obj):
             user = self.context.get('request').user
             if user and user.is_authenticated:
                 return TestResult.objects.filter(user=user, test=obj).first()
