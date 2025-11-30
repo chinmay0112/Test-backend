@@ -1,11 +1,11 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import CustomUser,  TestSeries, Test, Section, Question
+from .models import CustomUser, TestResult, TestSeries, Test, Section, Question
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
-
+from django.db.models import Sum
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
@@ -38,7 +38,7 @@ class SectionSerializer(serializers.ModelSerializer):
 
 
 # LEVEL 1: The main serializer for a Test, containing its Sections.
-class TestDetailSerializer(serializers.ModelSerializer):
+class TestSectionSerializer(serializers.ModelSerializer):
     # This line uses the SectionSerializer to create the final nested structure.
     sections = SectionSerializer(many=True, read_only=True)
 
@@ -120,3 +120,66 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.email = self.validated_data.get('email', user.email)
         user.save()
         return user
+    
+class TestStatusSerializer(serializers.ModelSerializer):
+    status=serializers.SerializerMethodField()
+    resultId=serializers.SerializerMethodField()
+    number_of_questions=serializers.SerializerMethodField()
+
+    class Meta:
+        model=Test
+        fields=['id',
+                'title',
+                'duration_minutes',
+                'number_of_questions',
+                'marks_correct',
+                'status',
+                'resultId']
+        def get_number_of_questions(self,obj):
+            total = obj.sections.aggregate(total_q = Sum('number_of_questions'))['total_q']
+            return total or 0
+        def get_user_result(self, obj):
+            user = self.context.get('request').user
+            if user and user.is_authenticated:
+                return TestResult.objects.filter(user=user, test=obj).first()
+            return None
+
+    def get_status(self, obj):
+        result = self.get_user_result(obj)
+        if result:
+            return 'Completed'
+        return 'Not Started'
+
+    def get_resultId(self, obj):
+        result = self.get_user_result(obj)
+        if result:
+            return result.id
+        return None
+
+class TestSeriesDetailSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
+    # This is the line you asked about:
+    tests = TestStatusSerializer(many=True, read_only=True) 
+    testsCompleted = serializers.SerializerMethodField()
+    testsTotal = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TestSeries
+        fields = [
+            'id', 
+            'name', 
+            'category', 
+            'description', 
+            'testsCompleted', 
+            'testsTotal', 
+            'tests'
+        ]
+
+    def get_testsTotal(self, obj):
+        return obj.tests.count()
+
+    def get_testsCompleted(self, obj):
+        user = self.context.get('request').user
+        if user and user.is_authenticated:
+            return TestResult.objects.filter(user=user, test__series=obj).count()
+        return 0

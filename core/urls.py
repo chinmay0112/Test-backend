@@ -1,9 +1,10 @@
 # core/urls.py
 from django.urls import path
-from .views import UserDetailView,  TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView
+from .views import UserDetailView, TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView
 
 urlpatterns = [
     path('test-series/', TestSeriesListView.as_view()),
+    path('test-series/<int:pk>/', TestSeriesDetailView.as_view(),name='series-detail'),
     path('tests/<int:pk>/submit/', SubmitTestView.as_view(), name='submit-test'),
     path('tests/<int:pk>/', TestDetailView.as_view()),
     path('users/me/', UserDetailView.as_view(), name = 'user-detail'),

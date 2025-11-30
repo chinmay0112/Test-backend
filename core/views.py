@@ -4,7 +4,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse
-from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestDetailSerializer, UserSerializer
+from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -18,6 +18,12 @@ class TestSeriesListView(generics.ListAPIView):
     queryset = TestSeries.objects.all()
     serializer_class = TestSeriesListSerializer
 
+class TestSeriesDetailView(generics.RetrieveAPIView):
+    '''Returns specific list of test series like ssc mock1, ssc mock2'''
+    queryset = TestSeries.objects.all()
+    serializer_class = TestSeriesDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 class QuestionListView(generics.ListAPIView):
     serializer_class = QuestionSerializer
 
@@ -28,15 +34,15 @@ class QuestionListView(generics.ListAPIView):
 # This is the view that will serve our nested data
 class TestDetailView(generics.RetrieveAPIView):
     queryset = Test.objects.all()
-    serializer_class = TestDetailSerializer
+    serializer_class = TestSectionSerializer
+    permission_classes=[permissions.IsAuthenticated]
 
 class SubmitTestView(APIView):
     # permission_classes = [permissions.IsAuthenticated] # Good to add this back later
 
     def post(self, request, pk, format=None):
         test = get_object_or_404(Test,pk=pk)
-        # user = request.user ##use when using production
-        user = CustomUser.objects.get(pk=1) # Use the hardcoded admin user
+        user = request.user
         answers = request.data.get('responses',[])
         score =0.0
         correct_count=0
@@ -48,6 +54,7 @@ class SubmitTestView(APIView):
         user_answers_map={ans['question_id']:ans for ans in answers}
         test_result = TestResult.objects.create(user=user, test=test, score=score)
 # Now we will loop user answers and calculate score
+        responses_to_create=[]
         for question in all_test_questions:
             is_correct=False
             selected_answer=None
@@ -69,14 +76,12 @@ class SubmitTestView(APIView):
                     unanswered_count += 1
             else:
                 unanswered_count += 1
-            
-            UserResponse.objects.create(
-                test_result=test_result, 
+            responses_to_create.append(UserResponse(test_result=test_result, 
                 question=question,
                 selected_answer=selected_answer,
                 marked_for_review=marked_for_review,
-                is_correct=is_correct  # <-- Pylance warning is now fixed
-            )
+                is_correct=is_correct ))
+            UserResponse.objects.bulk_create(responses_to_create)
 
         test_result.score = score
         test_result.save()
