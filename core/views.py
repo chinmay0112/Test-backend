@@ -122,7 +122,7 @@ class SaveTestProgressView(APIView):
             user=request.user,
             test=test,
             is_completed=False,
-            defaults={'time_remaining': test.duration_minutes * 60}
+            defaults={'time_remaining': test.duration_minutes * 60,'score':0.0}
         )
         if time_remaining is not None:
             test_result.time_remaining = time_remaining
