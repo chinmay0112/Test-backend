@@ -52,7 +52,18 @@ class SubmitTestView(APIView):
         all_test_questions = Question.objects.filter(section__test=test)
         correct_answers = {q.id: q.correct_option for q in all_test_questions}
         user_answers_map={ans['question_id']:ans for ans in answers}
-        test_result = TestResult.objects.create(user=user, test=test, score=score)
+        test_result = TestResult.objects.filter(
+            user=user, 
+            test=test, 
+            is_completed=False
+        ).last()
+        if not test_result:
+            test_result = TestResult.objects.create(
+                user=user, 
+                test=test, 
+                is_completed=False,
+                score=0
+            )
 # Now we will loop user answers and calculate score
         responses_to_create=[]
         for question in all_test_questions:
@@ -81,9 +92,12 @@ class SubmitTestView(APIView):
                 selected_answer=selected_answer,
                 marked_for_review=marked_for_review,
                 is_correct=is_correct ))
+        UserResponse.objects.filter(test_result=test_result).delete()
         UserResponse.objects.bulk_create(responses_to_create)
 
         test_result.score = score
+        test_result.is_completed=True
+        test_result.time_remaining=0
         test_result.save()
         question_details = QuestionResultSerializer(all_test_questions, many=True).data
         for question_data in question_details:
