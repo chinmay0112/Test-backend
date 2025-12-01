@@ -1,6 +1,6 @@
 # core/urls.py
 from django.urls import path
-from .views import UserDetailView, TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView
+from .views import UserDetailView, SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView
 
 urlpatterns = [
     path('test-series/', TestSeriesListView.as_view()),
@@ -12,5 +12,6 @@ urlpatterns = [
 path("auth/complete-profile/", CompleteProfile.as_view()),
 path('payments/create-order/', CreateOrderView.as_view(), name='create-order'),
     path('payments/verify/', VerifyPaymentView.as_view(), name='verify-payment'),
+    path('tests/<int:pk>/save-progress/', SaveTestProgressView.as_view(), name='save-progress'),
 
 ]

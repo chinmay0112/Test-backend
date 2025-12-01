@@ -44,7 +44,15 @@ class TestSectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Test
-        fields = ['id', 'title', 'duration_minutes', 'sections']
+        fields = ['id', 'title', 'duration_minutes', 'sections','saved_time_remaining']
+    
+    def get_saved_time_remaining(self, obj):
+        user = self.context.get('request').user
+        if user and user.is_authenticated:
+            active_attempt = TestResult.objects.filter(user=user, test=obj, is_completed=False).first()
+            if active_attempt:
+                return active_attempt.time_remaining
+            return None
 
 
 from .models import UserResponse

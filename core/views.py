@@ -113,11 +113,23 @@ class SubmitTestView(APIView):
         
         return Response(final_report, status=status.HTTP_200_OK)
 
+class SaveTestProgressView(APIView):
+    permission_classes=[permissions.IsAuthenticated]
+    def post(self, request, pk):
+        time_remaining = request.data.get('time_remaining')
+        test=get_object_or_404(Test,pk=pk)
+        test_result, created = TestResult.objects.get_or_create(
+            user=request.user,
+            test=test,
+            is_completed=False,
+            defaults={'time_remaining': test.duration_minutes * 60}
+        )
+        if time_remaining is not None:
+            test_result.time_remaining = time_remaining
+            test_result.save()
 
-# class RegisterView(generics.CreateAPIView):
-#     queryset = CustomUser.objects.all()
-#     serializer_class = UserSerializer         
-      
+        return Response({"status": "saved"}, status=status.HTTP_200_OK)
+
 
 class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
