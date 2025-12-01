@@ -225,10 +225,9 @@ class CreateOrderView(APIView):
         user = request.user
         plan_id = request.data.get('plan_id')
         amount = 0
-        if plan_id == 'pro_monthly':
+        if plan_id == 'pro_yearly':
             amount = 29900
-        elif plan_id == 'pro_yearly':
-            amount = 249900
+       
         else:
             return Response({'error':'Invalid plan ID'}, status = status.HTTP_400_BAD_REQUEST)
         
