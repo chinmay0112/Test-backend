@@ -181,5 +181,5 @@ class TestSeriesDetailSerializer(serializers.ModelSerializer):
     def get_testsCompleted(self, obj):
         user = self.context.get('request').user
         if user and user.is_authenticated:
-            return TestResult.objects.filter(user=user, test__test_series=obj).count()
+            return TestResult.objects.filter(user=user, test__test_series=obj).values('test').distinct().count()
         return 0
