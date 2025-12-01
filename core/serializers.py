@@ -41,7 +41,7 @@ class SectionSerializer(serializers.ModelSerializer):
 class TestSectionSerializer(serializers.ModelSerializer):
     # This line uses the SectionSerializer to create the final nested structure.
     sections = SectionSerializer(many=True, read_only=True)
-
+    saved_time_remaining=serializers.SerializerMethodField()
     class Meta:
         model = Test
         fields = ['id', 'title', 'duration_minutes', 'sections','saved_time_remaining']
