@@ -81,7 +81,7 @@ class SubmitTestView(APIView):
                 selected_answer=selected_answer,
                 marked_for_review=marked_for_review,
                 is_correct=is_correct ))
-            UserResponse.objects.bulk_create(responses_to_create)
+        UserResponse.objects.bulk_create(responses_to_create)
 
         test_result.score = score
         test_result.save()
