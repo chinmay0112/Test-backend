@@ -38,7 +38,7 @@ class TestDetailView(generics.RetrieveAPIView):
     permission_classes=[permissions.IsAuthenticated]
 
 class SubmitTestView(APIView):
-    # permission_classes = [permissions.IsAuthenticated] # Good to add this back later
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, format=None):
         test = get_object_or_404(Test,pk=pk)
