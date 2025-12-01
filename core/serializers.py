@@ -156,10 +156,10 @@ class TestStatusSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if not user or not user.is_authenticated:
             return 'Not Started'
-        active = TestResult.objects.filter(user=user, test=obj, is_completed=False).order_by('-created_at').first()
+        active = TestResult.objects.filter(user=user, test=obj, is_completed=False).order_by('-last_updated').first()
         if active:
             return 'Continue'
-        completed = TestResult.objects.filter(user=user, test=obj, is_completed=True).order_by('-created_at').first()
+        completed = TestResult.objects.filter(user=user, test=obj, is_completed=True).order_by('-last_updated').first()
         if completed:
             return 'Completed'
 

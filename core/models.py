@@ -107,6 +107,7 @@ class Question(models.Model):
 
 class TestResult(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+  
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     score = models.DecimalField(max_digits=6, decimal_places=2)
     completed_at = models.DateTimeField(auto_now_add=True)
