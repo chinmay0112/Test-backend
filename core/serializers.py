@@ -1,11 +1,16 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import CustomUser, TestResult, TestSeries, Test, Section, Question
+from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
 from django.db.models import Sum
+
+class ExamNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=ExamName
+        fields=['id','name']
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser

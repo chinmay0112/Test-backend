@@ -1,8 +1,9 @@
 # core/urls.py
 from django.urls import path
-from .views import UserDetailView, SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView
+from .views import UserDetailView, SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 
 urlpatterns = [
+    path('exam-names/', ExamNameListView.as_view()),
     path('test-series/', TestSeriesListView.as_view()),
     path('test-series/<int:pk>/', TestSeriesDetailView.as_view(),name='series-detail'),
     path('tests/<int:pk>/submit/', SubmitTestView.as_view(), name='submit-test'),

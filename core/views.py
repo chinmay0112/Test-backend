@@ -3,8 +3,8 @@ from rest_framework import generics
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
-from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse
-from .serializers import TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
+from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
+from .serializers import ExamNameSerializer, TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -14,6 +14,14 @@ from django.contrib.auth import get_user_model
 import razorpay
 import requests,os
 from django.conf import settings
+class ExamNameListView(generics.ListAPIView):
+    """
+    Returns a list of all Exam Categories (e.g. SSC, Banking, Railways).
+    Used for populating filter dropdowns on the frontend.
+    """
+    queryset = ExamName.objects.all()
+    serializer_class = ExamNameSerializer
+
 class TestSeriesListView(generics.ListAPIView):
     queryset = TestSeries.objects.all()
     serializer_class = TestSeriesListSerializer
