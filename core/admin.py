@@ -8,6 +8,8 @@ class QuestionAdmin(admin.ModelAdmin): # <-- Corrected here
     list_display = ('id', 'question_text', 'section')
     list_filter = ('section__test', 'section')
     search_fields = ('question_text', 'explanation')
+    list_display_links = ('id', 'question_text')
+  
 
 
 class UserResponseInline(admin.TabularInline):
