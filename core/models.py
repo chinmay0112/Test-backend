@@ -74,6 +74,21 @@ class Test(models.Model):
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     def __str__(self):
         return self.title
+    
+    def save(self, *args, **kwargs):
+        # Only run this logic if the test is being created for the first time (no ID yet)
+        if not self.pk:
+            # Check how many tests already exist in this specific series
+            existing_count = Test.objects.filter(test_series=self.test_series).count()
+            
+            # If this is the FIRST test (count is 0), make it free automatically
+            if existing_count == 0:
+                self.is_free = True
+            else:
+                self.is_free = False
+                
+        super().save(*args, **kwargs)
+
 
 class Section(models.Model):
     name=models.CharField(max_length=100)
