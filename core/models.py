@@ -67,7 +67,8 @@ class TestSeries(models.Model):
 class Test(models.Model):
     """Like SSC CGL Mock 1, SSC CGL Mock 2 etc"""
     title = models.CharField(max_length=100)
-    duration_minutes = models.PositiveIntegerField()    
+    duration_minutes = models.PositiveIntegerField()
+    is_free = models.BooleanField(default=False)    
     test_series = models.ForeignKey(TestSeries,on_delete=models.CASCADE)
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)

@@ -41,11 +41,28 @@ class QuestionListView(generics.ListAPIView):
     
 # This is the view that will serve our nested data
 class TestDetailView(generics.RetrieveAPIView):
+    """Returns the actual Exam Paper (Questions & Sections).
+    SECURE: Checks if the user is allowed to access this specific test."""
+    
     queryset = Test.objects.all()
     serializer_class = TestSectionSerializer
     permission_classes=[permissions.IsAuthenticated]
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user=request.user
+        if not instance.is_free and not getattr(user, 'is_pro_member', False):
+            return Response(
+                {"detail": "Access Denied: This test is locked for free users."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data) 
+    
+
 class SubmitTestView(APIView):
+    """This API will save timer state every minute"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, format=None):
@@ -102,6 +119,11 @@ class SubmitTestView(APIView):
                 is_correct=is_correct ))
         UserResponse.objects.filter(test_result=test_result).delete()
         UserResponse.objects.bulk_create(responses_to_create)
+        # TestResult.objects.filter(
+        #     user=user, 
+        #     test=test, 
+        #     is_completed=False
+        # ).exclude(id=test_result.id).delete()
 
         test_result.score = score
         test_result.is_completed=True
