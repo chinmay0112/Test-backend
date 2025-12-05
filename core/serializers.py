@@ -203,5 +203,96 @@ class TestSeriesDetailSerializer(serializers.ModelSerializer):
     def get_testsCompleted(self, obj):
         user = self.context.get('request').user
         if user and user.is_authenticated:
-            return TestResult.objects.filter(user=user, test__test_series=obj).values('test').distinct().count()
+            return TestResult.objects.filter(user=user, test__test_series=obj, is_completed=True).values('test').distinct().count()
         return 0
+
+
+# Result and analysis serializers
+class UserResponseDetailSerializer(serializers.ModelSerializer):
+    question = QuestionResultSerializer(read_only=True) # Nested question details
+    
+    class Meta:
+        model = UserResponse
+        fields = ['id', 'question', 'selected_answer', 'is_correct', 'marked_for_review']
+class TestResultDetailSerializer(serializers.ModelSerializer):
+    test_title=serializers.ReadOnlyField(source='test.title')
+    total_questions = serializers.SerializerMethodField()
+    correct_count = serializers.SerializerMethodField()
+    incorrect_count = serializers.SerializerMethodField()
+    unanswered_count = serializers.SerializerMethodField()
+    accuracy = serializers.SerializerMethodField()
+
+    # section wise breakdown
+    section_analysis = serializers.SerializerMethodField()
+    responses = UserResponseDetailSerializer(many=True, read_only=True)
+    class Meta:
+        model = TestResult
+        fields = [
+             'id', 'test_title', 'score', 'time_remaining', 'completed_at',
+            'total_questions', 'correct_count', 'incorrect_count', 
+            'unanswered_count', 'accuracy', 
+            'section_analysis',
+            'responses'
+        ]
+        
+    def get_total_questions(self, obj):
+        return obj.responses.count()
+    
+    def get_correct_count(self, obj):
+        return obj.responses.filter(is_correct=True).count()
+
+    def get_incorrect_count(self, obj):
+        # Incorrect = Answered but is_correct is False
+        return obj.responses.filter(is_correct=False).exclude(selected_answer__isnull=True).count()
+
+    def get_unanswered_count(self, obj):
+        return obj.responses.filter(selected_answer__isnull=True).count()
+
+    def get_accuracy(self, obj):
+        total_attempted = obj.responses.exclude(selected_answer__isnull=True).count()
+        correct = obj.responses.filter(is_correct=True).count()
+        if total_attempted > 0:
+            return round((correct / total_attempted) * 100, 2)
+        return 0
+
+    def get_section_analysis(self, obj):
+        analysis_data = []
+        
+        # 1. Get all sections for this test
+        sections = obj.test.sections.all()
+        
+        for section in sections:
+            # 2. Filter user responses belonging to this section
+            # We use double underscore: question__section
+            section_responses = obj.responses.filter(question__section=section)
+            
+            # 3. Calculate Stats
+            total = section.number_of_questions
+            attempted = section_responses.exclude(selected_answer__isnull=True).count()
+            correct = section_responses.filter(is_correct=True).count()
+            incorrect = section_responses.filter(is_correct=False).exclude(selected_answer__isnull=True).count()
+            skipped = total - attempted
+            
+            accuracy = 0
+            if attempted > 0:
+                accuracy = round((correct / attempted) * 100, 1)
+
+            analysis_data.append({
+                "section_name": section.name,
+                "total_questions": total,
+                "attempted": attempted,
+                "correct": correct,
+                "incorrect": incorrect,
+                "skipped": skipped,
+                "accuracy": accuracy
+            })
+            
+        return analysis_data
+
+class TestResultListSerializer(serializers.ModelSerializer):
+    test_title = serializers.ReadOnlyField(source='test.title')
+    series_name = serializers.ReadOnlyField(source='test.test_series.name')
+    
+    class Meta:
+        model = TestResult
+        fields = ['id', 'test_title', 'series_name', 'score', 'is_completed', 'completed_at']

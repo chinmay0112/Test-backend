@@ -4,7 +4,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
-from .serializers import ExamNameSerializer, TestSeriesListSerializer,QuestionResultSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
+from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -119,43 +119,22 @@ class SubmitTestView(APIView):
                 is_correct=is_correct ))
         UserResponse.objects.filter(test_result=test_result).delete()
         UserResponse.objects.bulk_create(responses_to_create)
-        # TestResult.objects.filter(
-        #     user=user, 
-        #     test=test, 
-        #     is_completed=False
-        # ).exclude(id=test_result.id).delete()
+        TestResult.objects.filter(
+            user=user, 
+            test=test, 
+            is_completed=False
+        ).exclude(id=test_result.id).delete()
 
         test_result.score = score
         test_result.is_completed=True
         test_result.time_remaining=0
         test_result.save()
-        question_details = QuestionResultSerializer(all_test_questions, many=True).data
-        for question_data in question_details:
-            q_id = question_data['id']
-            if q_id in user_answers_map:
-                question_data['user_answer'] = user_answers_map[q_id].get('selected_answer')
-                if question_data['user_answer']:
-                    question_data['is_correct'] = (user_answers_map[q_id].get('selected_answer', '').lower() == correct_answers[q_id])
-            else:
-                question_data['user_answer'] = None
-                question_data['is_correct'] = False
-
+       
         # --- BUILD THE FINAL RESPONSE ---
-        final_report = {
-            "score": score,
-            "total_questions": all_test_questions.count(),
-            "correct_count": correct_count,
-            "incorrect_count": incorrect_count,
-            "unanswered_count": unanswered_count,
-            "test_details": {
-                "title": test.title,
-                "marks_correct": test.marks_correct,
-                "marks_incorrect": test.marks_incorrect,
-            },
-            "full_results": question_details,
-        }
+        serializer = TestResultDetailSerializer(test_result)
+      
         
-        return Response(final_report, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SaveTestProgressView(APIView):
     permission_classes=[permissions.IsAuthenticated]
@@ -339,3 +318,28 @@ class VerifyPaymentView(APIView):
         user.save()
 
         return Response({"status": "success", "message": "Payment verified and user upgraded!"}, status=status.HTTP_200_OK)
+    
+
+class TestResultListView(generics.ListAPIView):
+    """
+    Returns history of all completed tests (for Dashboard).
+    """
+    serializer_class = TestResultListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TestResult.objects.filter(
+            user=self.request.user, 
+            is_completed=True
+        ).order_by('-completed_at')
+
+
+class TestResultDetailView(generics.RetrieveAPIView):
+    """
+    Returns the detailed report card for a specific result.
+    """
+    serializer_class = TestResultDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TestResult.objects.filter(user=self.request.user)
