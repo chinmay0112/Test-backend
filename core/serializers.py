@@ -221,7 +221,8 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
     incorrect_count = serializers.SerializerMethodField()
     unanswered_count = serializers.SerializerMethodField()
     accuracy = serializers.SerializerMethodField()
-
+    marks_correct = serializers.ReadOnlyField(source='test.marks_correct')
+    marks_incorrect = serializers.ReadOnlyField(source='test.marks_incorrect')
     # section wise breakdown
     section_analysis = serializers.SerializerMethodField()
     responses = UserResponseDetailSerializer(many=True, read_only=True)
@@ -232,7 +233,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
             'total_questions', 'correct_count', 'incorrect_count', 
             'unanswered_count', 'accuracy', 
             'section_analysis',
-            'responses'
+            'responses', 'marks_correct', 'marks_incorrect'
         ]
         
     def get_total_questions(self, obj):
