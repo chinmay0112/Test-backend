@@ -1,15 +1,10 @@
-from import_export import resources, fields
-from import_export.widgets import ForeignKeyWidget
-from .models import Question, Section
+from import_export import resources
+from .models import Question
 
 class QuestionResource(resources.ModelResource):
     # We need to map the 'section' column in Excel (which contains a name like 'Math')
     # to the actual Section ID in the database.
-    section = fields.Field(
-        column_name='section',
-        attribute='section',
-        widget=ForeignKeyWidget(Section, 'name') 
-    )
+  
 
     class Meta:
         model = Question
