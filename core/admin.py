@@ -1,14 +1,34 @@
 # core/admin.py
 from django.contrib import admin
 from .models import CustomUser, ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult
+from import_export.admin import ImportExportModelAdmin
+from .resources import QuestionResource
+@admin.register(Section)
+class SectionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'test', 'number_of_questions')
+    search_fields = ('name', 'test__title') 
+
+
 
 # --- Notice we are inheriting from admin.ModelAdmin ---
 @admin.register(Question)
-class QuestionAdmin(admin.ModelAdmin): # <-- Corrected here
-    list_display = ('id', 'question_text', 'section')
-    list_filter = ('section__test', 'section')
-    search_fields = ('question_text', 'explanation')
+class QuestionAdmin(ImportExportModelAdmin): # <-- Corrected here
+    resource_class = QuestionResource
+    
+    # Display columns
+    list_display = ('id', 'question_text', 'section', 'correct_option')
+    
+    # Clickable links
     list_display_links = ('id', 'question_text')
+    
+    # Filters sidebar
+    list_filter = ('section__test__test_series', 'section__test', 'section')
+    
+    # Search bar
+    search_fields = ('question_text', 'explanation')
+    
+    # Searchable dropdown for Section (prevents freezing)
+    autocomplete_fields = ['section']
   
 
 
@@ -41,3 +61,10 @@ admin.site.register(TestSeries)
 admin.site.register(Test)
 admin.site.register(Section)
 admin.site.register(CustomUser)
+
+class UserResponseInline(admin.TabularInline):
+    model = UserResponse
+    fields = ('question', 'selected_answer', 'is_correct', 'marked_for_review')
+    readonly_fields = ('question', 'selected_answer', 'is_correct', 'marked_for_review')
+    extra = 0
+    can_delete = False

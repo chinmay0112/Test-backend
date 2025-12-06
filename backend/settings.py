@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'import-export',
     'django.contrib.sites',
     'allauth.account', 
     'allauth.socialaccount',  # <-- This one creates "Social applications"
