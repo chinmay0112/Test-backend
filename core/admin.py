@@ -5,7 +5,7 @@ from import_export.admin import ImportExportModelAdmin
 from .resources import QuestionResource
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'test', 'number_of_questions')
+    list_display = ('id','name', 'test', 'number_of_questions')
     search_fields = ('name', 'test__title') 
 
 
