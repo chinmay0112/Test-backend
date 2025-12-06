@@ -58,7 +58,7 @@ class TestResultAdmin(admin.ModelAdmin): # <-- Corrected here
 # --- These simple registrations are fine ---
 admin.site.register(ExamName)
 admin.site.register(TestSeries)
-admin.site.register(Test)
+
 
 admin.site.register(CustomUser)
 
