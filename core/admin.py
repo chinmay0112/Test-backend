@@ -68,3 +68,9 @@ class UserResponseInline(admin.TabularInline):
     readonly_fields = ('question', 'selected_answer', 'is_correct', 'marked_for_review')
     extra = 0
     can_delete = False
+
+@admin.register(Test)
+class TestAdmin(admin.ModelAdmin):
+    list_display = ('title', 'duration_minutes', 'is_free')
+    list_filter = ('test_series', 'is_free')
+    search_fields = ('title',)
