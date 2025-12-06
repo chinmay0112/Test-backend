@@ -59,7 +59,7 @@ class TestResultAdmin(admin.ModelAdmin): # <-- Corrected here
 admin.site.register(ExamName)
 admin.site.register(TestSeries)
 admin.site.register(Test)
-admin.site.register(Section)
+
 admin.site.register(CustomUser)
 
 class UserResponseInline(admin.TabularInline):
