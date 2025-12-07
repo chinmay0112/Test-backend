@@ -223,6 +223,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
     accuracy = serializers.SerializerMethodField()
     marks_correct = serializers.ReadOnlyField(source='test.marks_correct')
     marks_incorrect = serializers.ReadOnlyField(source='test.marks_incorrect')
+    percentile=serializers.SerializerMethodField()
     # section wise breakdown
     section_analysis = serializers.SerializerMethodField()
     responses = UserResponseDetailSerializer(many=True, read_only=True)
@@ -233,7 +234,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
             'total_questions', 'correct_count', 'incorrect_count', 
             'unanswered_count', 'accuracy', 
             'section_analysis',
-            'responses', 'marks_correct', 'marks_incorrect'
+            'responses', 'marks_correct', 'marks_incorrect', 'percentile'
         ]
         
     def get_total_questions(self, obj):
@@ -255,6 +256,28 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
         if total_attempted > 0:
             return round((correct / total_attempted) * 100, 2)
         return 0
+
+    def get_percentile(self, obj):
+        # 'obj' is the current TestResult (for the current user)
+        
+        # A. Get all COMPLETED results for this specific Test ID
+        # We only care about people who actually finished the test
+        all_attempts = TestResult.objects.filter(test=obj.test, is_completed=True)
+        
+        total_students = all_attempts.count()
+        
+        if total_students <= 1:
+            return 100.00 # If you are the only one, you are top 100%
+
+        # B. Count how many people scored LESS than the current user
+        # 'score__lt' means "Score Less Than"
+        students_behind = all_attempts.filter(score__lt=obj.score).count()
+        
+        # C. Apply Formula
+        percentile_val = (students_behind / total_students) * 100
+        
+        return round(percentile_val, 2)
+
 
     def get_section_analysis(self, obj):
         analysis_data = []
