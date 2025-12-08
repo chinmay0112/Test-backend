@@ -263,19 +263,19 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
         # A. Get all COMPLETED results for this specific Test ID
         # We only care about people who actually finished the test
         all_attempts = TestResult.objects.filter(test=obj.test, is_completed=True)
+        best_attempts = all_attempts.order_by('user', '-score').distinct('user')
         
-        total_students = all_attempts.count()
+        total_students = best_attempts.count()
         
         if total_students <= 1:
             return 100.00 # If you are the only one, you are top 100%
 
         # B. Count how many people scored LESS than the current user
         # 'score__lt' means "Score Less Than"
-        students_behind = all_attempts.filter(score__lt=obj.score).count()
+        students_behind = sum(1 for attempt in best_attempts if attempt.score < obj.score)
         
-       
+        # 4. Formula
         percentile_val = (students_behind / total_students) * 100
-        
         return round(percentile_val, 2)
 
 
