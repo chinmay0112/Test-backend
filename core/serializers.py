@@ -327,11 +327,12 @@ class TestResultListSerializer(serializers.ModelSerializer):
 class LeaderboardSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
     accuracy = serializers.SerializerMethodField()
-    
+    rank = serializers.IntegerField(read_only=True) 
+
     class Meta:
         model = TestResult
         # Only send what is needed for the table
-        fields = ['student_name', 'score', 'accuracy', 'time_remaining', 'completed_at']
+        fields = ['rank','student_name', 'score', 'accuracy', 'time_remaining', 'completed_at']
 
     def get_student_name(self, obj):
         # Combine First + Last Name. 

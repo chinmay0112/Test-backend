@@ -351,7 +351,7 @@ class TestLeaderboardView(generics.ListAPIView):
     """
     serializer_class = LeaderboardSerializer
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def get_queryset(self):
         # getting test_id from URL: /api/tests/<pk>/leaderboard/
         test_id = self.kwargs['pk']
@@ -360,3 +360,20 @@ class TestLeaderboardView(generics.ListAPIView):
             test_id=test_id, 
             is_completed=True
         ).order_by('user','-score', '-time_remaining').distinct('user')
+    def list(self, request, *args, **kwargs):
+        test_id = self.kwargs['pk']
+        
+        queryset = TestResult.objects.filter(test_id=test_id, is_completed=True)\
+            .order_by('user', '-score')\
+            .distinct('user')
+        sorted_results = sorted(
+            queryset, 
+            key=lambda x: (-x.score, -x.time_remaining)
+        )[:50]
+
+        for index, result in enumerate(sorted_results):
+            result.rank = index + 1  # 1st item = Rank 1
+
+        # 3. Serialize
+        serializer = self.get_serializer(sorted_results, many=True)
+        return Response(serializer.data)
