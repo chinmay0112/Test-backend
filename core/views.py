@@ -4,7 +4,7 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
-from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, TestStatusSerializer,TestSeriesDetailSerializer
+from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -343,3 +343,20 @@ class TestResultDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return TestResult.objects.filter(user=self.request.user)
+
+class TestLeaderboardView(generics.ListAPIView):
+    """
+    Returns the top 50 students for a specific test.
+    Sorted by Score (Desc) -> Time Remaining (Desc).
+    """
+    serializer_class = LeaderboardSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # getting test_id from URL: /api/tests/<pk>/leaderboard/
+        test_id = self.kwargs['pk']
+        
+        return TestResult.objects.filter(
+            test_id=test_id, 
+            is_completed=True
+        ).order_by('-score', '-time_remaining')[:50]

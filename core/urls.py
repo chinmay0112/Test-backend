@@ -1,6 +1,6 @@
 # core/urls.py
 from django.urls import path
-from .views import UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
+from .views import TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 
 urlpatterns = [
     path('exam-names/', ExamNameListView.as_view()),
@@ -15,7 +15,8 @@ path('payments/create-order/', CreateOrderView.as_view(), name='create-order'),
     path('payments/verify/', VerifyPaymentView.as_view(), name='verify-payment'),
     path('tests/<int:pk>/save-progress/', SaveTestProgressView.as_view(), name='save-progress'),
     path('results/<int:pk>/', TestResultDetailView.as_view()),
-        path('results/', TestResultListView.as_view(), name='result-list'),       # <--- ADDED THIS
+        path('results/', TestResultListView.as_view(), name='result-list'),  
+        path('tests/<int:pk>/leaderboard/', TestLeaderboardView.as_view(), name='test-leaderboard'),     # <--- ADDED THIS
 
 
 ]

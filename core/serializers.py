@@ -273,7 +273,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
         # 'score__lt' means "Score Less Than"
         students_behind = all_attempts.filter(score__lt=obj.score).count()
         
-        # C. Apply Formula
+       
         percentile_val = (students_behind / total_students) * 100
         
         return round(percentile_val, 2)
@@ -320,3 +320,28 @@ class TestResultListSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestResult
         fields = ['id', 'test_title', 'series_name', 'score', 'is_completed', 'completed_at']
+
+
+# core/serializers.py
+
+class LeaderboardSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    accuracy = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TestResult
+        # Only send what is needed for the table
+        fields = ['student_name', 'score', 'accuracy', 'time_remaining', 'completed_at']
+
+    def get_student_name(self, obj):
+        # Combine First + Last Name. 
+        # Optional: You can mask the last name for privacy (e.g. "Aniket S.")
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.email.split('@')[0]
+
+    def get_accuracy(self, obj):
+        # Calculate accuracy on the fly
+        total_attempted = obj.responses.exclude(selected_answer__isnull=True).count()
+        if total_attempted == 0:
+            return 0.0
+        correct = obj.responses.filter(is_correct=True).count()
+        return round((correct / total_attempted) * 100, 1)
