@@ -359,4 +359,4 @@ class TestLeaderboardView(generics.ListAPIView):
         return TestResult.objects.filter(
             test_id=test_id, 
             is_completed=True
-        ).order_by('-score', '-time_remaining')[:50]
+        ).order_by('userf','-score', '-time_remaining').distinct('user')
