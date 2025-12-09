@@ -230,7 +230,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestResult
         fields = [
-             'id', 'test_title', 'score', 'time_remaining', 'completed_at',
+             'id', 'test','test_title', 'score', 'time_remaining', 'completed_at',
             'total_questions', 'correct_count', 'incorrect_count', 
             'unanswered_count', 'accuracy', 
             'section_analysis',
