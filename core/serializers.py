@@ -303,6 +303,7 @@ class TestResultDetailSerializer(serializers.ModelSerializer):
 
             analysis_data.append({
                 "section_name": section.name,
+                "section_id": section.id,
                 "total_questions": total,
                 "attempted": attempted,
                 "correct": correct,
