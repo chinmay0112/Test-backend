@@ -154,7 +154,7 @@ class TestStatusSerializer(serializers.ModelSerializer):
     def get_user_result(self, obj):
             user = self.context.get('request').user
             if user and user.is_authenticated:
-                return TestResult.objects.filter(user=user, test=obj).first()
+                return TestResult.objects.filter(user=user, test=obj, is_completed=True).order_by('-completed_at').first()
             return None
 
     def get_status(self, obj):
