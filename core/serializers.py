@@ -70,7 +70,7 @@ class UserResponseSerializer(serializers.ModelSerializer):
 class QuestionResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation']
+        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation','section']
 
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(max_length=255, required=True)
