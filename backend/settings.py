@@ -246,4 +246,24 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET')
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = 'view' # Optional permissions
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 IMPORT_EXPORT_SKIP_ADMIN_LOG = False
-IMPORT_EXPORT_TMP_STORAGE_CLASS = 'import_export.tmp_storages.MediaStorage' # Might help with file handling on Render
+IMPORT_EXPORT_TMP_STORAGE_CLASS = 'import_export.tmp_storages.MediaStorage'
+
+
+
+# core/settings.py
+
+# 1. Basic Verification Settings (Keep these)
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+
+# 2. Email Backend Configuration (Brevo SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'chinmaykulshreshtha@gmail.com' # Your Login Email
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+# 3. Default Sender
+# This MUST match a "Verified Sender" in your Brevo dashboard
+DEFAULT_FROM_EMAIL = 'PrepMaster Team <chinmaykulshreshtha@gmail.com>'
