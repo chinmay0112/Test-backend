@@ -260,7 +260,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 # 2. Email Backend Configuration (Brevo SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_PORT = 587
+EMAIL_PORT = 2525
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'chinmaykulshreshtha@gmail.com' # Your Login Email
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '') # Defaults to empty string if missing# 3. Default Sender
