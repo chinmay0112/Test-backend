@@ -252,17 +252,18 @@ IMPORT_EXPORT_TMP_STORAGE_CLASS = 'import_export.tmp_storages.MediaStorage'
 # core/settings.py
 
 # 1. Basic Verification Settings (Keep these)
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# 2. Email Backend Configuration (Brevo SMTP)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_PORT = 2525
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'chinmaykulshreshtha@gmail.com' # Your Login Email
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '') # Defaults to empty string if missing# 3. Default Sender
-# This MUST match a "Verified Sender" in your Brevo dashboard
-DEFAULT_FROM_EMAIL = 'PrepMaster Team <chinmaykulshreshtha@gmail.com>'
+# ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# # 2. Email Backend Configuration (Brevo SMTP)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp-relay.brevo.com'
+# EMAIL_PORT = 2525
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'chinmaykulshreshtha@gmail.com' # Your Login Email
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '') # Defaults to empty string if missing# 3. Default Sender
+# # This MUST match a "Verified Sender" in your Brevo dashboard
+# DEFAULT_FROM_EMAIL = 'PrepMaster Team <chinmaykulshreshtha@gmail.com>'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
