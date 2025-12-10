@@ -148,3 +148,12 @@ class UserResponse(models.Model):
 
     def __str__(self):
         return f"Response for Q{self.question.id}"
+
+class PhoneOTP(models.Model):
+    phone_number = models.CharField(max_length=15, unique=True)
+    otp = models.CharField(max_length=6)
+    count = models.IntegerField(default=0, help_text="Number of OTP sent")
+    created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.phone_number} - {self.otp}"

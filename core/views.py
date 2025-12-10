@@ -377,3 +377,83 @@ class TestLeaderboardView(generics.ListAPIView):
         # 3. Serialize
         serializer = self.get_serializer(sorted_results, many=True)
         return Response(serializer.data)
+    
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import PhoneOTP, CustomUser
+from rest_framework_simplejwt.tokens import RefreshToken
+import random
+
+# Helper to send OTP
+def send_sms(phone, otp):
+    # For Dev: Print to console
+    print("-------------------------------------")
+    print(f" OTP for {phone} is: {otp}")
+    print("-------------------------------------")
+    # For Prod: Use Twilio / MSG91 API here
+    return True
+
+class SendOTPView(APIView):
+    def post(self, request):
+        phone = request.data.get('phone')
+        if not phone:
+            return Response({"error": "Phone number is required"}, status=400)
+
+        # Generate 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        
+        # Save to DB (Update if exists, Create if new)
+        obj, created = PhoneOTP.objects.update_or_create(
+            phone_number=phone,
+            defaults={'otp': otp}
+        )
+        
+        # Increment count (optional spam protection)
+        obj.count += 1
+        obj.save()
+
+        # Send
+        send_sms(phone, otp)
+        
+        return Response({"message": "OTP sent successfully", "otp": otp}, status=200) # Remove "otp" from response in production!
+
+class VerifyOTPView(APIView):
+    def post(self, request):
+        phone = request.data.get('phone')
+        otp = request.data.get('otp')
+
+        if not phone or not otp:
+            return Response({"error": "Phone and OTP are required"}, status=400)
+
+        # 1. Verify OTP
+        try:
+            record = PhoneOTP.objects.get(phone_number=phone)
+        except PhoneOTP.DoesNotExist:
+            return Response({"error": "Invalid phone number"}, status=400)
+
+        if record.otp != otp:
+            return Response({"error": "Invalid OTP"}, status=400)
+
+        # 2. Login or Create User
+        user, created = CustomUser.objects.get_or_create(
+            phone=phone,
+            defaults={
+                'username': phone, # Use phone as username if needed
+                'email': f"{phone}@example.com" # Placeholder email
+            }
+        )
+        
+        # 3. Generate Token
+        refresh = RefreshToken.for_user(user)
+        
+        # Clear OTP after success
+        record.otp = "" 
+        record.save()
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user_id': user.id,
+            'is_new_user': created
+        })

@@ -1,6 +1,6 @@
 # core/urls.py
 from django.urls import path
-from .views import TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
+from .views import SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 from dj_rest_auth.registration.views import VerifyEmailView  # <--- IMPORT THIS
 
 urlpatterns = [
@@ -19,7 +19,9 @@ path('payments/create-order/', CreateOrderView.as_view(), name='create-order'),
     path('tests/<int:pk>/save-progress/', SaveTestProgressView.as_view(), name='save-progress'),
     path('results/<int:pk>/', TestResultDetailView.as_view()),
         path('results/', TestResultListView.as_view(), name='result-list'),  
-        path('tests/<int:pk>/leaderboard/', TestLeaderboardView.as_view(), name='test-leaderboard'),     # <--- ADDED THIS
+        path('tests/<int:pk>/leaderboard/', TestLeaderboardView.as_view(), name='test-leaderboard'), 
+            path('auth/send-otp/', SendOTPView.as_view(), name='send-otp'),
+    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),    # <--- ADDED THIS
 
 
 ]
