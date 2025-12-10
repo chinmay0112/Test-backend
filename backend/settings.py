@@ -263,7 +263,6 @@ EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'chinmaykulshreshtha@gmail.com' # Your Login Email
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-# 3. Default Sender
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '') # Defaults to empty string if missing# 3. Default Sender
 # This MUST match a "Verified Sender" in your Brevo dashboard
 DEFAULT_FROM_EMAIL = 'PrepMaster Team <chinmaykulshreshtha@gmail.com>'
