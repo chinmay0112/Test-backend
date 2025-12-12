@@ -508,7 +508,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 "lastActive": pending_test.last_updated.strftime("%b %d, %I:%M %p"), # "Oct 18, 10:30 AM"
                 "progress_time": pending_test.time_remaining # You might use this to calculate % if needed
             })
-        return Response(None) # No pending test
+        return Response("Yayy, you have no pending tests") # No pending test
     
     # 4. Recent Activity (Table)
     @action(detail=False, methods=['get'])
