@@ -1,13 +1,13 @@
 # core/views.py
 from rest_framework import generics
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
+from rest_framework.decorators import action
+from django.db.models import Avg, Count, Sum
+
 from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
 from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions,viewsets
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
@@ -457,3 +457,122 @@ class VerifyOTPView(APIView):
             'user_id': user.id,
             'is_new_user': created
         })
+
+class DashboardViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+  # 1. Performance Stats & Overall Accuracy (Top Row + Doughnut Chart)
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        user=request.user
+        completed_results = TestResult.objects.filter(user=user, is_completed=True)
+        tests_taken = completed_results.count()
+        avg_score = completed_results.aggregate(Avg('score'))['score__avg'] or 0.0
+        user_responses = UserResponse.objects.filter(test_result__user=user, test_result__is_completed=True).exclude(selected_answer__isnull=True)
+        questions_attempted = user_responses.count()
+        correct_answers = user_responses.filter(is_correct=True).count()
+        accuracy = round((correct_answers / questions_attempted * 100), 1) if questions_attempted > 0 else 0.0
+
+        return Response({
+            "tests_taken": tests_taken,
+            "avg_score": round(avg_score, 1),
+            "questions_attempted": questions_attempted,
+            "accuracy": accuracy
+        })
+        # 2. Performance Trend (Line Chart)
+    @action(detail=False, methods=['get'])
+    def trend(self, request):
+        user=request.user
+        recent_results = TestResult.objects.filter(user=user, is_completed=True).order_by('-completed_at')[:10]
+        data = []
+        for result in reversed(recent_results):
+            data.append({
+                "test_title": result.test.title,
+                "score": result.score,
+                "date": result.completed_at.strftime("%b %d") # e.g. "Oct 18"
+            })
+            
+        return Response(data)
+    
+    @action(detail=False, methods=['get'])
+    def resume(self, request):
+        user = request.user
+        # Find the most recently updated INCOMPLETE test
+        pending_test = TestResult.objects.filter(user=user, is_completed=False).order_by('-last_updated').first()
+        
+        if pending_test:
+            return Response({
+                "id": pending_test.test.id,
+                "name": pending_test.test.title,
+                "category": pending_test.test.test_series.category.name, # Assuming relations exist
+                "description": pending_test.test.test_series.description[:100] + "...", # Truncate description
+                "lastActive": pending_test.last_updated.strftime("%b %d, %I:%M %p"), # "Oct 18, 10:30 AM"
+                "progress_time": pending_test.time_remaining # You might use this to calculate % if needed
+            })
+        return Response(None) # No pending test
+    
+    # 4. Recent Activity (Table)
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        user = request.user
+        recent_results = TestResult.objects.filter(user=user, is_completed=True).order_by('-completed_at')[:5]
+        
+        data = []
+        for result in recent_results:
+            # Calculate accuracy for this specific test
+            total_attempted = result.responses.exclude(selected_answer__isnull=True).count()
+            correct = result.responses.filter(is_correct=True).count()
+            accuracy = round((correct / total_attempted * 100), 1) if total_attempted > 0 else 0
+
+            data.append({
+                "id": result.id, # Result ID for navigation
+                "name": result.test.title,
+                "category": result.test.test_series.category.name,
+                "score": result.score,
+                "accuracy": accuracy,
+                "date": result.completed_at.strftime("%b %d, %Y")
+            })
+            
+        return Response(data)
+
+    # 5. My Series (Sidebar) - Simplified for now
+    # Ideally, this should calculate progress % for each series
+    @action(detail=False, methods=['get'])
+    def my_series(self, request):
+        user = request.user
+        # Logic: Get all series the user has interacted with? Or just all available?
+        # For now, let's return all series with user's progress.
+        
+        all_series = TestSeries.objects.all() # Or filter by enrollment if you have that logic
+        data = []
+        
+        for series in all_series:
+            total_tests = series.test_set.count()
+            if total_tests == 0: continue
+            
+            completed_tests = TestResult.objects.filter(
+                user=user, 
+                test__test_series=series, 
+                is_completed=True
+            ).values('test').distinct().count()
+            
+            progress = round((completed_tests / total_tests) * 100)
+            
+            # Only show if user has at least started it? Or show all?
+            # Let's show top 5 relevant ones or all.
+            data.append({
+                "id": series.id,
+                "name": series.name,
+                "category": series.category.name,
+                "progress": progress,
+                "icon": series.name[0] # Simple placeholder
+            })
+            
+        return Response(data)
+    
+
+
+    
+
+
+   
+     

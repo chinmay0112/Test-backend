@@ -1,8 +1,11 @@
 # core/urls.py
 from django.urls import path
-from .views import SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
+from .views import DashboardViewSet, SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 from dj_rest_auth.registration.views import VerifyEmailView  # <--- IMPORT THIS
+from rest_framework.routers import DefaultRouter
 
+router = DefaultRouter()
+router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 urlpatterns = [
     path('exam-names/', ExamNameListView.as_view()),
     path('test-series/', TestSeriesListView.as_view()),
