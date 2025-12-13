@@ -463,20 +463,70 @@ class DashboardViewSet(viewsets.ViewSet):
   # 1. Performance Stats & Overall Accuracy (Top Row + Doughnut Chart)
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        user=request.user
+        user = request.user
+        
+        # Get all COMPLETED results
         completed_results = TestResult.objects.filter(user=user, is_completed=True)
+        
+        # 1. Tests Taken
         tests_taken = completed_results.count()
-        avg_score = completed_results.aggregate(Avg('score'))['score__avg'] or 0.0
-        user_responses = UserResponse.objects.filter(test_result__user=user, test_result__is_completed=True).exclude(selected_answer__isnull=True)
-        questions_attempted = user_responses.count()
-        correct_answers = user_responses.filter(is_correct=True).count()
-        accuracy = round((correct_answers / questions_attempted * 100), 1) if questions_attempted > 0 else 0.0
+
+        # 2. Average Score
+        avg_score = completed_results.aggregate(Avg('score'))['score__avg'] or 0
+        
+        # 3. Aggregated Counts for Accuracy Chart
+        # We need to sum up correct/incorrect across ALL tests.
+        # Efficient way: Filter UserResponse objects linked to completed tests.
+        
+        all_responses = UserResponse.objects.filter(
+            test_result__user=user, 
+            test_result__is_completed=True
+        )
+        
+        # Correct Answers
+        total_correct = all_responses.filter(is_correct=True).count()
+        
+        # Incorrect Answers (Attempted but wrong)
+        # Note: We assume 'selected_answer' is not null for attempted questions
+        total_incorrect = all_responses.filter(is_correct=False).exclude(selected_answer__isnull=True).count()
+        
+        # Questions Attempted
+        questions_attempted = total_correct + total_incorrect
+
+        # Skipped Questions Logic
+        # This is harder to get from UserResponse if we don't save skipped rows.
+        # But wait! Your SubmitTestView DOES save skipped rows (as None).
+        # So we can just count them.
+        total_skipped = all_responses.filter(selected_answer__isnull=True).count()
+        
+        # Total Questions Seen (Correct + Incorrect + Skipped)
+        total_questions_seen = questions_attempted + total_skipped
+
+        # 4. Overall Accuracy Calculation
+        # Formula: (Total Correct / Total Questions Seen) * 100
+        # OR: (Total Correct / Total Attempted) * 100 ? 
+        # Usually "Accuracy" implies (Correct / Attempted). 
+        # "Score Percentage" implies (Correct / Total Questions).
+        # Let's stick to Accuracy (Correct / Attempted) for the stat card, 
+        # but send all counts for the Pie Chart.
+        
+        overall_accuracy = 0
+        if questions_attempted > 0:
+            overall_accuracy = round((total_correct / questions_attempted) * 100, 1)
 
         return Response({
             "tests_taken": tests_taken,
             "avg_score": round(avg_score, 1),
             "questions_attempted": questions_attempted,
-            "accuracy": accuracy
+            "accuracy": overall_accuracy,
+            "total_questions": total_questions_seen,
+            
+            # Extra data for Charts
+            "chart_data": {
+                "correct": total_correct,
+                "incorrect": total_incorrect,
+                "skipped": total_skipped
+            }
         })
         # 2. Performance Trend (Line Chart)
     @action(detail=False, methods=['get'])
