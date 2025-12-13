@@ -203,7 +203,7 @@ class TestSeriesDetailSerializer(serializers.ModelSerializer):
             'description', 
             'testsCompleted', 
             'testsTotal', 
-            'tests','stages'
+            'stages'
         ]
 
     def get_testsTotal(self, obj):
