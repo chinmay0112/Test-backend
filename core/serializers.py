@@ -1,7 +1,7 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName
+from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName, TestStage
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
@@ -178,10 +178,19 @@ class TestStatusSerializer(serializers.ModelSerializer):
             return result.id
         return None
 
+class TestStageSerializer(serializers.ModelSerializer):
+    # This fetches the tests linked to this stage
+    tests = TestStatusSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = TestStage
+        fields = ['id', 'name', 'tests']
+
 class TestSeriesDetailSerializer(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
     # This is the line you asked about:
     tests = TestStatusSerializer(many=True, read_only=True,source='test_set') 
+    stages = TestStageSerializer(many=True, read_only=True)
     testsCompleted = serializers.SerializerMethodField()
     testsTotal = serializers.SerializerMethodField()
 
@@ -194,7 +203,7 @@ class TestSeriesDetailSerializer(serializers.ModelSerializer):
             'description', 
             'testsCompleted', 
             'testsTotal', 
-            'tests'
+            'tests','stages'
         ]
 
     def get_testsTotal(self, obj):

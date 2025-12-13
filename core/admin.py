@@ -1,6 +1,6 @@
 # core/admin.py
 from django.contrib import admin
-from .models import CustomUser, ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
+from .models import CustomUser, PhoneOTP,ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
 from import_export.admin import ImportExportModelAdmin
 from .resources import QuestionResource
 @admin.register(Section)
@@ -59,15 +59,10 @@ class TestResultAdmin(admin.ModelAdmin): # <-- Corrected here
 admin.site.register(ExamName)
 admin.site.register(TestSeries)
 admin.site.register(TestStage)
-
+admin.site.register(PhoneOTP)
 admin.site.register(CustomUser)
 
-class UserResponseInline(admin.TabularInline):
-    model = UserResponse
-    fields = ('question', 'selected_answer', 'is_correct', 'marked_for_review')
-    readonly_fields = ('question', 'selected_answer', 'is_correct', 'marked_for_review')
-    extra = 0
-    can_delete = False
+
 
 @admin.register(Test)
 class TestAdmin(admin.ModelAdmin):
