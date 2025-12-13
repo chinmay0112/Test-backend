@@ -1,6 +1,6 @@
 # core/admin.py
 from django.contrib import admin
-from .models import CustomUser, ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult
+from .models import CustomUser, ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
 from import_export.admin import ImportExportModelAdmin
 from .resources import QuestionResource
 @admin.register(Section)
@@ -58,7 +58,7 @@ class TestResultAdmin(admin.ModelAdmin): # <-- Corrected here
 # --- These simple registrations are fine ---
 admin.site.register(ExamName)
 admin.site.register(TestSeries)
-
+admin.site.register(TestStage)
 
 admin.site.register(CustomUser)
 

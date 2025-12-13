@@ -64,24 +64,40 @@ class TestSeries(models.Model):
     def __str__(self):
         return self.name
     
+class TestStage(models.Model):
+    name = models.CharField(max_length=100, help_text="e.g. Tier-1, Prelims")
+    test_series = models.ForeignKey(TestSeries, related_name='stages', on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=1, help_text="Order to display tabs (1, 2, 3)")
+
+    def __str__(self):
+        return f"{self.test_series.name} - {self.name}"
+
 class Test(models.Model):
     """Like SSC CGL Mock 1, SSC CGL Mock 2 etc"""
     title = models.CharField(max_length=100)
     duration_minutes = models.PositiveIntegerField()
     is_free = models.BooleanField(default=False)    
     test_series = models.ForeignKey(TestSeries,on_delete=models.CASCADE)
+    stage = models.ForeignKey(TestStage, related_name='tests', on_delete=models.CASCADE, null=True, blank=True)
+
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     def __str__(self):
         return self.title
     
     def save(self, *args, **kwargs):
-        # Only run this logic if the test is being created for the first time (no ID yet)
+        # Only run automation on creation (no ID yet)
         if not self.pk:
-            # Check how many tests already exist in this specific series
-            existing_count = Test.objects.filter(test_series=self.test_series).count()
+            existing_count = 0
             
-            # If this is the FIRST test (count is 0), make it free automatically
+            if self.stage:
+                # If stage exists, check how many tests are in THIS stage
+                existing_count = Test.objects.filter(stage=self.stage).count()
+            else:
+                # Fallback: check series if no stage is assigned
+                existing_count = Test.objects.filter(test_series=self.test_series).count()
+            
+            # If count is 0 (First test of the stage/series), make it free
             if existing_count == 0:
                 self.is_free = True
             else:
