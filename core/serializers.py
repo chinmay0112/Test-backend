@@ -189,7 +189,7 @@ class TestStageSerializer(serializers.ModelSerializer):
 class TestSeriesDetailSerializer(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
     # This is the line you asked about:
-    tests = TestStatusSerializer(many=True, read_only=True,source='test_set') 
+    # tests = TestStatusSerializer(many=True, read_only=True,source='test_set') 
     stages = TestStageSerializer(many=True, read_only=True)
     testsCompleted = serializers.SerializerMethodField()
     testsTotal = serializers.SerializerMethodField()
