@@ -53,7 +53,7 @@ class TestDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         user=request.user
-        if not instance.is_free and not getattr(user, 'has_ever_been_pro', False):
+        if not instance.is_free and not getattr(user, 'is_pro_member', False):
             return Response(
                 {"detail": "Access Denied: This test is locked for free users."}, 
                 status=status.HTTP_403_FORBIDDEN
@@ -225,7 +225,7 @@ class GoogleLogin(APIView):
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "phone":user.phone,
-                "has_ever_been_pro": user.has_ever_been_pro,
+                "is_pro_member": user.is_pro_member,
             },"needs_profile": (
         user.phone is None or
         not user.first_name or
@@ -316,8 +316,8 @@ class VerifyPaymentView(APIView):
 
         # 3. If signature is valid, grant the user access
         user = request.user
-        user.has_ever_been_pro = True # This grants the Pro status
-        user.pro_expiry_date = timezone.now() + timedelta(minutes=1)
+        user.is_pro_member = True # This grants the Pro status
+        user.pro_expiry_date = timezone.now() + timedelta(days=365)
         user.save()
 
         return Response({"status": "success", "message": "Payment verified and user upgraded!"}, status=status.HTTP_200_OK)

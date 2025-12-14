@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         # These are the "safe" fields to show to a logged-in user
-        fields = ('id', 'email', 'phone', 'first_name', 'last_name','has_ever_been_pro','pro_expiry_date', 'is_pro_active', 'streak')
+        fields = ('id', 'email', 'phone', 'first_name', 'last_name','is_pro_member','pro_expiry_date', 'is_pro_active', 'streak')
         
     def get_streak(self, obj):
         # Get all completed tests for this user
