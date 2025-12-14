@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='customuser',
-            name='is_pro_member',
+            name='has_ever_been_pro',
             field=models.BooleanField(default=False),
         ),
     ]

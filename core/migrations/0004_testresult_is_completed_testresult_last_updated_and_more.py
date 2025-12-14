@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0003_customuser_is_pro_member'),
+        ('core', '0003_customuser_has_ever_been_pro'),
     ]
 
     operations = [

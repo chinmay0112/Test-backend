@@ -37,11 +37,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(unique=True) # Use email for login
     phone = models.CharField(max_length=15, unique=True, blank=True, null=True) # Added phone field
-    is_pro_member = models.BooleanField(default=False) # Legacy static field (keep for safety or migration)
+    has_ever_been_pro = models.BooleanField(default=False) # Legacy static field (keep for safety or migration)
     pro_expiry_date = models.DateTimeField(null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    is_pro_member = models.BooleanField(default=False)
+    has_ever_been_pro = models.BooleanField(default=False)
     objects = CustomUserManager() # Use the manager we just defined
 
     USERNAME_FIELD = 'email' # Use email to log in
