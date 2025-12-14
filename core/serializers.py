@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
         # These are the "safe" fields to show to a logged-in user
         fields = ('id', 'email', 'phone', 'first_name', 'last_name','is_pro_member','pro_expiry_date', 'is_pro_active', 'streak')
         
-        def get_streak(self, obj):
+    def get_streak(self, obj):
         # Get all completed tests for this user
             completed_results = TestResult.objects.filter(user=obj, is_completed=True).order_by('-completed_at')
         
