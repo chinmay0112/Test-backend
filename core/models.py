@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.conf import settings
+from django.utils import timezone
 class CustomUserManager(BaseUserManager):
     def create_user(self,first_name,last_name,email,phone,password=None,**extra_fields):
         """
@@ -36,7 +37,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(unique=True) # Use email for login
     phone = models.CharField(max_length=15, unique=True, blank=True, null=True) # Added phone field
-    
+    is_pro_member = models.BooleanField(default=False) # Legacy static field (keep for safety or migration)
+    pro_expiry_date = models.DateTimeField(null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_pro_member = models.BooleanField(default=False)
@@ -47,6 +49,16 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    @property
+    def is_pro_active(self):
+        """
+        Returns True if the user has an active pro subscription.
+        Checks if pro_expiry_date is set and is in the future.
+        """
+        if self.pro_expiry_date and self.pro_expiry_date > timezone.now():
+            return True
+        return False
 class ExamName(models.Model):
     """Exam name is SSC, Bank etc"""
     name=models.CharField(max_length=100)

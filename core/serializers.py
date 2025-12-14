@@ -6,17 +6,52 @@ from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
 from django.db.models import Sum
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import TruncDate
 
 class ExamNameSerializer(serializers.ModelSerializer):
     class Meta:
         model=ExamName
         fields=['id','name']
 class UserSerializer(serializers.ModelSerializer):
+    is_pro_active = serializers.BooleanField(read_only=True)
+    streak = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
         # These are the "safe" fields to show to a logged-in user
-        fields = ('id', 'email', 'phone', 'first_name', 'last_name','is_pro_member')
-        # We DO NOT include 'password' here
+        fields = ('id', 'email', 'phone', 'first_name', 'last_name','is_pro_member','pro_expiry_date', 'is_pro_active', 'streak')
+        
+        def get_streak(self, obj):
+        # Get all completed tests for this user
+            completed_results = TestResult.objects.filter(user=obj, is_completed=True).order_by('-completed_at')
+        
+        # Get distinct dates of activity
+            activity_dates = completed_results.annotate(
+            date=TruncDate('completed_at')
+            ).values_list('date', flat=True).distinct()
+
+            current_streak = 0
+            if activity_dates:
+                today = timezone.now().date()
+            last_activity = activity_dates[0]
+
+            # Check if active today or yesterday
+            if last_activity == today or last_activity == (today - timedelta(days=1)):
+                current_streak = 1
+                previous_date = last_activity
+                
+                # Count backwards
+                for date in activity_dates[1:]:
+                    if date == previous_date - timedelta(days=1):
+                        current_streak += 1
+                        previous_date = date
+                    else:
+                        break
+            else:
+                current_streak = 0
+                
+            return current_streak
 
 
 class TestSeriesListSerializer(serializers.ModelSerializer):

@@ -13,6 +13,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 import razorpay
 import requests,os
+from datetime import timedelta
+from django.utils import timezone
 from django.conf import settings
 class ExamNameListView(generics.ListAPIView):
     """
@@ -315,6 +317,7 @@ class VerifyPaymentView(APIView):
         # 3. If signature is valid, grant the user access
         user = request.user
         user.is_pro_member = True # This grants the Pro status
+        user.pro_expiry_date = timezone.now() + timedelta(minutes=1)
         user.save()
 
         return Response({"status": "success", "message": "Payment verified and user upgraded!"}, status=status.HTTP_200_OK)
