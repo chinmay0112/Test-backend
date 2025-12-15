@@ -1,41 +1,28 @@
-{% extends "admin/import_export/change_list.html" %} {% block object-tools %}
-<ul class="object-tools">
-  {{ block.super }}
-  <!-- This renders the parent's buttons -->
-  <li>
-    <a
-      href="generate-ai/"
-      class="addlink"
-      style="background-color: #6366f1; color: white"
-    >
-      ✨ Generate with AI
-    </a>
-  </li>
-</ul>
-{% endblock %} ``` *Note: If `block.super` renders a `
-<ul>
-  ` itself, you will get nested `
-  <ul>
-    `s. Browsers handle this (it looks okay), but it's not valid HTML. However,
-    it fixes the crash.* **My Strong Recommendation:** Try the **clean logic**
-    first (fixing the newlines). 1. **File:**
-    `templates/admin/question_changelist.html` 2. **Code:** ```html {% extends
-    "admin/import_export/change_list.html" %} {% block object-tools %}
-    <!-- Render the standard buttons (Import/Export/Add) -->
-    {{ block.super }}
+{% extends "admin/import_export/change_list.html" %} {% block object-tools %} {#
+1. Render the standard Django/Import-Export buttons first #} {{ block.super }}
+{# 2. Use JavaScript to cleanly inject our AI button into the existing list #}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Find the button container
+    var toolsList = document.querySelector("ul.object-tools");
 
-    <!-- Use Javascript to inject our button cleanly into the existing list -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        var toolsList = document.querySelector("ul.object-tools");
-        if (toolsList) {
-          var newLi = document.createElement("li");
-          newLi.innerHTML =
-            '<a href="generate-ai/" class="addlink" style="background-color: #6366f1; color: white;">✨ Generate with AI</a>';
-          toolsList.prepend(newLi);
-        }
-      });
-    </script>
-    {% endblock %}
-  </ul>
-</ul>
+    if (toolsList) {
+      // Create the new list item
+      var newLi = document.createElement("li");
+
+      // Create the link
+      var newLink = document.createElement("a");
+      newLink.href = "generate-ai/";
+      newLink.className = "addlink";
+      newLink.style.backgroundColor = "#6366f1"; // Indigo-500
+      newLink.style.color = "white";
+      newLink.innerText = "✨ Generate with AI";
+
+      newLi.appendChild(newLink);
+
+      // Add it to the start of the list
+      toolsList.insertBefore(newLi, toolsList.firstChild);
+    }
+  });
+</script>
+{% endblock %}
