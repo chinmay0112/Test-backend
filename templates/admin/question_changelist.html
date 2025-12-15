@@ -1,16 +1,41 @@
-{% extends 'admin/import_export/change_list.html' %} {% block object-tools-items
-%}
-<!-- 1. The Super block renders the Import/Export/Add buttons -->
-{{ block.super }}
+{% extends "admin/import_export/change_list.html" %} {% block object-tools %}
+<ul class="object-tools">
+  {{ block.super }}
+  <!-- This renders the parent's buttons -->
+  <li>
+    <a
+      href="generate-ai/"
+      class="addlink"
+      style="background-color: #6366f1; color: white"
+    >
+      ✨ Generate with AI
+    </a>
+  </li>
+</ul>
+{% endblock %} ``` *Note: If `block.super` renders a `
+<ul>
+  ` itself, you will get nested `
+  <ul>
+    `s. Browsers handle this (it looks okay), but it's not valid HTML. However,
+    it fixes the crash.* **My Strong Recommendation:** Try the **clean logic**
+    first (fixing the newlines). 1. **File:**
+    `templates/admin/question_changelist.html` 2. **Code:** ```html {% extends
+    "admin/import_export/change_list.html" %} {% block object-tools %}
+    <!-- Render the standard buttons (Import/Export/Add) -->
+    {{ block.super }}
 
-<!-- 2. Your AI Button -->
-<li>
-  <a
-    href="generate-ai/"
-    class="addlink"
-    style="background-color: #6366f1; color: white"
-  >
-    ✨ Generate with AI
-  </a>
-</li>
-{% endblock %}
+    <!-- Use Javascript to inject our button cleanly into the existing list -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var toolsList = document.querySelector("ul.object-tools");
+        if (toolsList) {
+          var newLi = document.createElement("li");
+          newLi.innerHTML =
+            '<a href="generate-ai/" class="addlink" style="background-color: #6366f1; color: white;">✨ Generate with AI</a>';
+          toolsList.prepend(newLi);
+        }
+      });
+    </script>
+    {% endblock %}
+  </ul>
+</ul>
