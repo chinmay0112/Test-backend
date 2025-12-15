@@ -1,33 +1,19 @@
-{% extends "admin/base_site.html" %} {% block content %}
-<div style="max-width: 600px; margin: 20px">
-  <h2>Generate Questions using Gemini AI</h2>
-  <p>Enter a topic, and AI will create unique questions for you instantly.</p>
+<!-- OLD: {% extends 'admin/change_list.html' %} -->
 
-  <form method="post">
-    {% csrf_token %}
-    <div
-      style="
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      "
-    >
-      {{ form.as_p }}
-      <br />
-      <input
-        type="submit"
-        value="Generate Now"
-        style="
-          background: #4f46e5;
-          color: white;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-        "
-      />
-    </div>
-  </form>
-</div>
+<!-- NEW: Extend the import_export template instead -->
+{% extends 'admin/import_export/change_list.html' %} {% block object-tools-items
+%}
+<!-- 1. Keep the standard buttons (Add, Import, Export) -->
+{{ block.super }}
+
+<!-- 2. Add your AI Button -->
+<li>
+  <a
+    href="generate-ai/"
+    class="addlink"
+    style="background-color: #6366f1; color: white"
+  >
+    ✨ Generate with AI
+  </a>
+</li>
 {% endblock %}
