@@ -34,7 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
             current_streak = 0
             if activity_dates:
                 today = timezone.now().date()
-            last_activity = activity_dates[0]
+                last_activity = activity_dates[0]
 
             # Check if active today or yesterday
             if last_activity == today or last_activity == (today - timedelta(days=1)):
