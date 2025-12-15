@@ -37,19 +37,19 @@ class UserSerializer(serializers.ModelSerializer):
                 last_activity = activity_dates[0]
 
             # Check if active today or yesterday
-            if last_activity == today or last_activity == (today - timedelta(days=1)):
-                current_streak = 1
-                previous_date = last_activity
+                if last_activity == today or last_activity == (today - timedelta(days=1)):
+                    current_streak = 1
+                    previous_date = last_activity
                 
                 # Count backwards
-                for date in activity_dates[1:]:
-                    if date == previous_date - timedelta(days=1):
-                        current_streak += 1
-                        previous_date = date
-                    else:
-                        break
-            else:
-                current_streak = 0
+                    for date in activity_dates[1:]:
+                        if date == previous_date - timedelta(days=1):
+                            current_streak += 1
+                            previous_date = date
+                        else:
+                            break
+                else:
+                    current_streak = 0
                 
             return current_streak
 
