@@ -1,12 +1,9 @@
-<!-- OLD: {% extends 'admin/change_list.html' %} -->
-
-<!-- NEW: Extend the import_export template instead -->
 {% extends 'admin/import_export/change_list.html' %} {% block object-tools-items
 %}
-<!-- 1. Keep the standard buttons (Add, Import, Export) -->
+<!-- 1. The Super block renders the Import/Export/Add buttons -->
 {{ block.super }}
 
-<!-- 2. Add your AI Button -->
+<!-- 2. Your AI Button -->
 <li>
   <a
     href="generate-ai/"
