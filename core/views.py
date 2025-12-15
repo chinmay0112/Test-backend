@@ -2,7 +2,7 @@
 from rest_framework import generics
 from rest_framework.decorators import action
 from django.db.models import Avg, Count, Sum
-
+from django.db.models import Count, Q, Case, When, IntegerField
 from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
 from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
@@ -589,43 +589,44 @@ class DashboardViewSet(viewsets.ViewSet):
 
     # 5. My Series (Sidebar) - Simplified for now
     # Ideally, this should calculate progress % for each series
+
+
     @action(detail=False, methods=['get'])
     def my_series(self, request):
         user = request.user
-        # Logic: Get all series the user has interacted with? Or just all available?
-        # For now, let's return all series with user's progress.
         
-        all_series = TestSeries.objects.all() # Or filter by enrollment if you have that logic
+        # 1. THE OPTIMIZED QUERY
+        # We fetch Series + Category + Counts in a single DB hit.
+        all_series = TestSeries.objects.select_related('category').annotate(
+            # Count total tests in this series
+            total_tests_count=Count('test', distinct=True),
+            
+            # Count unique tests completed by THIS user in this series
+            # We use filter=Q(...) to count only the relevant rows
+            completed_tests_count=Count(
+                'test__testresult',
+                filter=Q(test__testresult__user=user, test__testresult__is_completed=True),
+                distinct=True
+            )
+        )
+        
         data = []
         
+        # 2. THE LOOP (Pure Python Math, No DB Queries)
         for series in all_series:
-            total_tests = series.test_set.count()
-            if total_tests == 0: continue
+            total = series.total_tests_count
+            if total == 0: continue
             
-            completed_tests = TestResult.objects.filter(
-                user=user, 
-                test__test_series=series, 
-                is_completed=True
-            ).values('test').distinct().count()
+            completed = series.completed_tests_count
+            progress = round((completed / total) * 100)
             
-            progress = round((completed_tests / total_tests) * 100)
-            
-            # Only show if user has at least started it? Or show all?
-            # Let's show top 5 relevant ones or all.
             data.append({
                 "id": series.id,
                 "name": series.name,
-                "category": series.category.name,
+                "category": series.category.name, # Already fetched via select_related
                 "progress": progress,
-                "icon": series.name[0] # Simple placeholder
+                "icon": series.name[0]
             })
             
         return Response(data)
     
-
-
-    
-
-
-   
-     
