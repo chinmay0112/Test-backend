@@ -59,7 +59,7 @@ class TestDetailView(generics.RetrieveAPIView):
                 {"detail": "Access Denied: This test is locked for free users."}, 
                 status=status.HTTP_403_FORBIDDEN
             )
-
+        serializer = self.get_serializer(instance)
         data = serializer.data
 
         # --- NEW LOGIC: INJECT SAVED PROGRESS ---
