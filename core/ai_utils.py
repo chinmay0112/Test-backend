@@ -12,7 +12,7 @@ genai.configure(api_key=api_key)
 
 def generate_questions_from_ai(topic, count, difficulty):
     model = genai.GenerativeModel(
-        'gemini-2.0-flash-lite',
+        'gemini-flash-latest',
         generation_config={"response_mime_type": "application/json"}
     )
     
