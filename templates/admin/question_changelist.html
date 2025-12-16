@@ -1,28 +1,64 @@
-{% extends "admin/import_export/change_list.html" %} {% block object-tools %} {#
-1. Render the standard Django/Import-Export buttons first #} {{ block.super }}
-{# 2. Use JavaScript to cleanly inject our AI button into the existing list #}
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Find the button container
-    var toolsList = document.querySelector("ul.object-tools");
+{% extends "admin/base_site.html" %} {% load i18n admin_urls static %} {% block
+breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo;
+  <a href="{% url 'admin:app_list' app_label=opts.app_label %}"
+    >{{ opts.app_config.verbose_name }}</a
+  >
+  &rsaquo;
+  <a href="{% url 'admin:core_section_changelist' %}"
+    >{{ opts.verbose_name_plural|capfirst }}</a
+  >
+  &rsaquo; {{ section.name }} &rsaquo; Generate AI Questions
+</div>
+{% endblock %} {% block content %}
+<div id="content-main">
+  <h1>Generate AI Questions for: {{ section.name }}</h1>
 
-    if (toolsList) {
-      // Create the new list item
-      var newLi = document.createElement("li");
+  <form method="post">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+      <div class="form-row">
+        <div class="field-box">
+          {{ field.errors }} {{ field.label_tag }} {{ field }} {% if
+          field.help_text %}
+          <p class="help">{{ field.help_text|safe }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </fieldset>
 
-      // Create the link
-      var newLink = document.createElement("a");
-      newLink.href = "generate-ai/";
-      newLink.className = "addlink";
-      newLink.style.backgroundColor = "#6366f1"; // Indigo-500
-      newLink.style.color = "white";
-      newLink.innerText = "✨ Generate with AI";
+    <div class="submit-row">
+      <input
+        type="submit"
+        value="Generate Questions"
+        class="default"
+        name="_save"
+      />
+      <a
+        href="{% url 'admin:core_section_change' section.id %}"
+        class="button"
+        style="float: right; background: #79aec8"
+        >Cancel</a
+      >
+    </div>
+  </form>
 
-      newLi.appendChild(newLink);
-
-      // Add it to the start of the list
-      toolsList.insertBefore(newLi, toolsList.firstChild);
-    }
-  });
-</script>
+  <div
+    style="
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #447e9b;
+    "
+  >
+    <p>
+      <strong>Please Note:</strong> Generation may take 10-20 seconds. Do not
+      refresh the page.
+    </p>
+  </div>
+</div>
 {% endblock %}

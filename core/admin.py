@@ -3,14 +3,94 @@ from django.contrib import admin
 from .models import CustomUser, PhoneOTP,ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
 from import_export.admin import ImportExportModelAdmin
 from .resources import QuestionResource
-
-
-
-
+from django.urls import path
+from django.utils.html import format_html
+from django.shortcuts import render, redirect
+from .ai_utils import generate_questions_from_ai
+from .forms import AIQuestionForm
+from django.contrib import messages
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    list_display = ('id','name', 'test', 'number_of_questions')
-    search_fields = ('name', 'test__title') 
+    list_display = ('id', 'name', 'test', 'number_of_questions', 'ai_actions')
+    search_fields = ('name', 'test__title')
+    
+    # 1. Register the custom URL
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<int:section_id>/generate-questions/',
+                self.admin_site.admin_view(self.generate_questions_view),
+                name='section-generate-ai',
+            ),
+        ]
+        return custom_urls + urls
+
+    # 2. Add the Button to the List View
+    def ai_actions(self, obj):
+        return format_html(
+            '<a class="button" style="background-color: #28a745; color: white;" href="{}">Generate AI Questions</a>',
+            f"{obj.id}/generate-questions/"
+        )
+    ai_actions.short_description = "AI Tools"
+    ai_actions.allow_tags = True
+
+    # 3. The View Logic
+    def generate_questions_view(self, request, section_id):
+        # Get the section or 404
+        section = Section.objects.get(pk=section_id)
+        
+        if request.method == 'POST':
+            form = AIQuestionForm(request.POST)
+            if form.is_valid():
+                topic = form.cleaned_data['topic']
+                count = form.cleaned_data['num_questions']
+                difficulty = form.cleaned_data['difficulty']
+
+                # Notify user
+                self.message_user(request, "AI is generating questions, please wait...", level=messages.INFO)
+                
+                try:
+                    questions_data = generate_questions_from_ai(topic, count, difficulty)
+                    
+                    if questions_data:
+                        count_created = 0
+                        for q in questions_data:
+                            # CREATE QUESTION OBJECT
+                            Question.objects.create(
+                                section=section,
+                                question_text=q.get('question_text'),
+                                option_a=q.get('option_a'), # Updated keys
+                                option_b=q.get('option_b'),
+                                option_c=q.get('option_c'),
+                                option_d=q.get('option_d'),
+                                # This will now save 'option_a', 'option_b' etc. as the correct answer
+                                correct_option=q.get('correct_option'), 
+                                explanation=q.get('explanation')
+                            )
+                            count_created += 1
+                        
+                        self.message_user(request, f"Success! Added {count_created} questions about '{topic}'.", level=messages.SUCCESS)
+                        return redirect('admin:core_section_change', section_id)
+                    else:
+                        self.message_user(request, "AI returned empty data. Please try again.", level=messages.ERROR)
+                
+                except Exception as e:
+                    self.message_user(request, f"Error: {str(e)}", level=messages.ERROR)
+
+        else:
+            form = AIQuestionForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'form': form,
+            'section': section,
+            'opts': self.model._meta,
+            'title': f"Generate Questions for {section.name}"
+        }
+        
+        # CRITICAL FIX: Render the correct template, NOT 'question_changelist.html'
+        return render(request, 'admin/question_changelist.html', context)
 
 
 

@@ -3,40 +3,39 @@ import google.generativeai as genai
 import os
 import json
 
-# Configure the API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def generate_questions_from_ai(topic, count, difficulty):
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Use the model configuration to FORCE JSON
+    model = genai.GenerativeModel(
+        'gemini-1.5-flash',
+        generation_config={"response_mime_type": "application/json"}
+    )
     
-    # The Prompt Engineering (Crucial for getting valid JSON)
     prompt = f"""
     You are an expert exam setter for competitive exams (SSC/Banking).
     Generate {count} multiple-choice questions on the topic: "{topic}".
     Difficulty Level: {difficulty}.
     
-    Output strictly as a JSON array of objects. Do not include markdown formatting (```json).
-    Each object must have these keys:
-    - "question_text": The question string
-    - "option_a": Option A
-    - "option_b": Option B
-    - "option_c": Option C
-    - "option_d": Option D
-    - "correct_option": A single lowercase letter ('a', 'b', 'c', or 'd')
-    - "explanation": A detailed explanation of the answer (2-3 sentences)
-    
-    Ensure the questions are factual and high quality.
+    Output a raw JSON array of objects.
+    Each object must have these exact keys:
+    - "question_text": string
+    - "option_a": string
+    - "option_b": string
+    - "option_c": string
+    - "option_d": string
+    - "correct_option": string (Must be exactly "option_a, "option_b", "option_c", or "option_d")
+    - "explanation": string
     """
     
     try:
         response = model.generate_content(prompt)
-        text_response = response.text.strip()
         
-        # Cleanup: Sometimes AI adds markdown ```json ... ``` wrapper
-        if text_response.startswith("```"):
-            text_response = text_response.replace("```json", "").replace("```", "")
-            
-        questions_data = json.loads(text_response)
+        # Since we used response_mime_type="application/json", 
+        # we usually don't need to strip markdown, but it's safe to keep the check just in case.
+        text_data = response.text
+        questions_data = json.loads(text_data)
+        
         return questions_data
         
     except Exception as e:
