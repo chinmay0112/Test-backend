@@ -90,7 +90,7 @@ class SectionAdmin(admin.ModelAdmin):
         }
         
         # CRITICAL FIX: Render the correct template, NOT 'question_changelist.html'
-        return render(request, 'admin/question_changelist.html', context)
+        return render(request, 'admin/ai_generate_form.html', context)
 
 
 
