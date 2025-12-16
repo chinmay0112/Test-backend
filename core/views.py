@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 import razorpay
 import requests,os
+from django.db import transaction
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
@@ -68,74 +69,94 @@ class SubmitTestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, format=None):
-        test = get_object_or_404(Test,pk=pk)
-        user = request.user
-        answers = request.data.get('responses',[])
-        score =0.0
-        correct_count=0
-        incorrect_count=0
-        answered_count=0
-        unanswered_count=0
-        all_test_questions = Question.objects.filter(section__test=test)
-        correct_answers = {q.id: q.correct_option for q in all_test_questions}
-        user_answers_map={ans['question_id']:ans for ans in answers}
-        test_result = TestResult.objects.filter(
-            user=user, 
-            test=test, 
-            is_completed=False
-        ).last()
-        if not test_result:
-            test_result = TestResult.objects.create(
+        # Start the atomic transaction block
+        with transaction.atomic():
+            test = get_object_or_404(Test, pk=pk)
+            user = request.user
+            answers = request.data.get('responses', [])
+            score = 0.0
+            correct_count = 0
+            incorrect_count = 0
+            answered_count = 0
+            unanswered_count = 0
+            
+            all_test_questions = Question.objects.filter(section__test=test)
+            correct_answers = {q.id: q.correct_option for q in all_test_questions}
+            user_answers_map = {ans['question_id']: ans for ans in answers}
+
+            # Get or Create TestResult
+            test_result = TestResult.objects.filter(
                 user=user, 
                 test=test, 
-                is_completed=False,
-                score=0
-            )
-# Now we will loop user answers and calculate score
-        responses_to_create=[]
-        for question in all_test_questions:
-            is_correct=False
-            selected_answer=None
-            marked_for_review=False
-            if question.id in user_answers_map:
-                user_answer_data=user_answers_map[question.id]
-                selected_answer = user_answer_data.get('selected_answer')
-                marked_for_review = user_answer_data.get('marked_for_review', False)
-                if selected_answer:
-                    answered_count +=1
-                    if selected_answer.lower() == correct_answers[question.id]:
-                        is_correct=True
-                        correct_count += 1
-                        score += float(test.marks_correct)
+                is_completed=False
+            ).last()
+
+            if not test_result:
+                test_result = TestResult.objects.create(
+                    user=user, 
+                    test=test, 
+                    is_completed=False,
+                    score=0
+                )
+
+            # Now we will loop user answers and calculate score
+            responses_to_create = []
+            
+            for question in all_test_questions:
+                is_correct = False
+                selected_answer = None
+                marked_for_review = False
+
+                if question.id in user_answers_map:
+                    user_answer_data = user_answers_map[question.id]
+                    selected_answer = user_answer_data.get('selected_answer')
+                    marked_for_review = user_answer_data.get('marked_for_review', False)
+
+                    if selected_answer:
+                        answered_count += 1
+                        if selected_answer.lower() == correct_answers[question.id]:
+                            is_correct = True
+                            correct_count += 1
+                            score += float(test.marks_correct)
+                        else:
+                            incorrect_count += 1
+                            score -= float(test.marks_incorrect)
                     else:
-                        incorrect_count += 1
-                        score -= float(test.marks_incorrect)
+                        unanswered_count += 1
                 else:
                     unanswered_count += 1
-            else:
-                unanswered_count += 1
-            responses_to_create.append(UserResponse(test_result=test_result, 
-                question=question,
-                selected_answer=selected_answer,
-                marked_for_review=marked_for_review,
-                is_correct=is_correct ))
-        UserResponse.objects.filter(test_result=test_result).delete()
-        UserResponse.objects.bulk_create(responses_to_create)
-        TestResult.objects.filter(
-            user=user, 
-            test=test, 
-            is_completed=False
-        ).exclude(id=test_result.id).delete()
 
-        test_result.score = score
-        test_result.is_completed=True
-        test_result.time_remaining=0
-        test_result.save()
+                # Add to bulk list
+                responses_to_create.append(UserResponse(
+                    test_result=test_result, 
+                    question=question,
+                    selected_answer=selected_answer,
+                    marked_for_review=marked_for_review,
+                    is_correct=is_correct
+                ))
+
+            # Database operations (Safe inside atomic block)
+            # 1. Delete old responses for this result to avoid duplicates
+            UserResponse.objects.filter(test_result=test_result).delete()
+            
+            # 2. Bulk create new responses
+            UserResponse.objects.bulk_create(responses_to_create)
+            
+            # 3. Cleanup other incomplete attempts for this test/user
+            TestResult.objects.filter(
+                user=user, 
+                test=test, 
+                is_completed=False
+            ).exclude(id=test_result.id).delete()
+
+            # 4. Finalize Test Result
+            test_result.score = score
+            test_result.is_completed = True
+            test_result.time_remaining = 0
+            test_result.save()
        
-        # --- BUILD THE FINAL RESPONSE ---
+        # --- BUILD THE FINAL RESPONSE (Outside atomic block) ---
         serializer = TestResultDetailSerializer(test_result)
-      
-        
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SaveTestProgressView(APIView):
