@@ -60,8 +60,29 @@ class TestDetailView(generics.RetrieveAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data) 
+        data = serializer.data
+
+        # --- NEW LOGIC: INJECT SAVED PROGRESS ---
+        # Check if there is an ongoing (incomplete) test for this user
+        ongoing_result = TestResult.objects.filter(
+            user=user, 
+            test=instance, 
+            is_completed=False
+        ).first()
+
+        if ongoing_result:
+            # 1. Add Saved Time
+            data['saved_time_remaining'] = ongoing_result.time_remaining
+            
+            # 2. Add Saved Responses
+            saved_responses = UserResponse.objects.filter(test_result=ongoing_result).values(
+                'question_id', 'selected_answer', 'marked_for_review'
+            )
+            data['saved_responses'] = list(saved_responses)
+        else:
+            data['saved_time_remaining'] = None
+            data['saved_responses'] = []
+        return Response(data) 
     
 
 class SubmitTestView(APIView):
@@ -163,6 +184,7 @@ class SaveTestProgressView(APIView):
     permission_classes=[permissions.IsAuthenticated]
     def post(self, request, pk):
         time_remaining = request.data.get('time_remaining')
+        responses = request.data.get('responses', [])
         test=get_object_or_404(Test,pk=pk)
         test_result, created = TestResult.objects.get_or_create(
             user=request.user,
@@ -173,6 +195,23 @@ class SaveTestProgressView(APIView):
         if time_remaining is not None:
             test_result.time_remaining = time_remaining
             test_result.save()
+        
+        for resp in responses:
+            question_id = resp.get('question_id')
+            selected_answer = resp.get('selected_answer')
+            marked_for_review = resp.get('marked_for_review', False)
+            
+            if question_id:
+                # Update existing response or create new one
+                UserResponse.objects.update_or_create(
+                    test_result=test_result,
+                    question_id=question_id,
+                    defaults={
+                        'selected_answer': selected_answer,
+                        'marked_for_review': marked_for_review,
+                        'is_correct': False # We don't grade yet
+                    }
+                )
 
         return Response({"status": "saved"}, status=status.HTTP_200_OK)
 
