@@ -2,7 +2,7 @@
 import google.generativeai as genai
 import os
 import json
-
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 # verify the key exists
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
@@ -17,6 +17,14 @@ def generate_questions_from_ai(topic, count, difficulty):
         generation_config={"response_mime_type": "application/json"}
     )
     
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+    }
+
+
     prompt = f"""
     You are an expert exam setter.
     Generate {count} multiple-choice questions on: "{topic}".
