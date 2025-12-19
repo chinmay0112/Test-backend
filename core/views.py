@@ -3,8 +3,8 @@ from rest_framework import generics
 from rest_framework.decorators import action
 from django.db.models import Avg, Count, Sum
 from django.db.models import Count, Q, Case, When, IntegerField
-from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName
-from .serializers import ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
+from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName,PhoneOTP, CustomUser
+from .serializers import CustomRegisterSerializer, ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions,viewsets
@@ -17,6 +17,12 @@ from django.db import transaction
 from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
+import random
+
+
+
+
+
 class ExamNameListView(generics.ListAPIView):
     """
     Returns a list of all Exam Categories (e.g. SSC, Banking, Railways).
@@ -441,12 +447,7 @@ class TestLeaderboardView(generics.ListAPIView):
         serializer = self.get_serializer(sorted_results, many=True)
         return Response(serializer.data)
     
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import PhoneOTP, CustomUser
-from rest_framework_simplejwt.tokens import RefreshToken
-import random
+
 
 # Helper to send OTP
 def send_sms(phone, otp):
@@ -520,6 +521,52 @@ class VerifyOTPView(APIView):
             'user_id': user.id,
             'is_new_user': created
         })
+
+
+
+class RegisterUserView(APIView):
+    def post(self, request):
+        data = request.data.copy() # Make mutable copy
+        phone = data.get('phone')
+        otp = data.get('otp')
+
+        # 1. Verify OTP First
+        try:
+            record = PhoneOTP.objects.get(phone_number=phone)
+        except PhoneOTP.DoesNotExist:
+            return Response({"error": "Please request an OTP first."}, status=400)
+
+        if str(record.otp).strip() != str(otp).strip():
+            return Response({"otp": "Invalid OTP"}, status=400) 
+
+        # 2. Map Frontend keys to Serializer keys
+        # Your serializer expects 'password', but frontend sends 'password1'
+        if 'password1' in data:
+            data['password'] = data['password1']
+        
+        # 3. Use your EXISTING CustomRegisterSerializer
+        # We pass 'request' in context because dj-rest-auth serializers expect it
+        serializer = CustomRegisterSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # This save() method calls the logic you wrote in CustomRegisterSerializer
+            user = serializer.save(request) 
+            
+            # Clear OTP
+            record.delete()
+            
+            # Generate Tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'message': 'Registration successful',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': UserSerializer(user).data
+            }, status=201)
+        
+        return Response(serializer.errors, status=400)
+
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
