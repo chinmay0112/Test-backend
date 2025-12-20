@@ -526,36 +526,53 @@ class VerifyOTPView(APIView):
 
 class RegisterUserView(APIView):
     def post(self, request):
-        data = request.data.copy() # Make mutable copy
+        data = request.data.copy()
         phone = data.get('phone')
-        otp = data.get('otp')
+        input_otp = data.get('otp')
 
-        # 1. Verify OTP First
+        # 1. Basic Validation: Ensure fields exist
+        if not phone or not input_otp:
+            return Response({"error": "Phone number and OTP are required."}, status=400)
+
+        # 2. Fetch OTP Record
         try:
             record = PhoneOTP.objects.get(phone_number=phone)
         except PhoneOTP.DoesNotExist:
-            return Response({"error": "Please request an OTP first."}, status=400)
+            return Response({"error": "No OTP found for this phone number. Please request OTP first."}, status=400)
 
-        if str(record.otp).strip() != str(otp).strip():
-            return Response({"otp": "Invalid OTP"}, status=400) 
+        # 3. ROBUST OTP CHECK
+        # Convert both to string and strip whitespace for safety
+        db_otp = str(record.otp).strip()
+        user_otp = str(input_otp).strip()
 
-        # 2. Map Frontend keys to Serializer keys
-        # Your serializer expects 'password', but frontend sends 'password1'
+        # A. Check if DB OTP is empty (Means it was already used/verified by VerifyOTPView)
+        if not db_otp:
+            return Response({"otp": "This OTP has expired or was already verified. Please request a new one."}, status=400)
+
+        # B. Strict comparison
+        # [Debugging] Uncomment the line below to see what is actually being compared in your terminal
+        # print(f"Comparing DB: '{db_otp}' vs User: '{user_otp}'")
+
+        if db_otp != user_otp:
+            return Response({"otp": "Invalid OTP provided."}, status=400)
+
+        # --- OTP Verified Successfully ---
+
+        # 4. Password Mapping (frontend 'password1' -> backend 'password')
         if 'password1' in data:
             data['password'] = data['password1']
         
-        # 3. Use your EXISTING CustomRegisterSerializer
-        # We pass 'request' in context because dj-rest-auth serializers expect it
+        # 5. Registration Serializer
         serializer = CustomRegisterSerializer(data=data, context={'request': request})
         
         if serializer.is_valid():
-            # This save() method calls the logic you wrote in CustomRegisterSerializer
             user = serializer.save(request) 
             
-            # Clear OTP
-            record.delete()
+            # 6. CRITICAL: Delete/Clear OTP record so it cannot be used again
+            record.delete() 
+            # OR record.otp = "" then record.save() if you want to keep the phone entry
             
-            # Generate Tokens
+            # 7. Generate Tokens
             refresh = RefreshToken.for_user(user)
             
             return Response({
