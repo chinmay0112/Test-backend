@@ -22,6 +22,8 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+from core.views import RegisterUserView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.urls')),
@@ -35,7 +37,7 @@ urlpatterns = [
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # This uses the dj-rest-auth library for registration
-    path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+    path('api/auth/registration/',RegisterUserView.as_view(), name='custom_register')
 
    
 
