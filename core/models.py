@@ -175,7 +175,7 @@ class UserResponse(models.Model):
    
 
     def __str__(self):
-        return f"Response for Q{self.question.id}"
+        return f"Response for Q{self.question_id}"
 
 class PhoneOTP(models.Model):
     phone_number = models.CharField(max_length=15, unique=True)
