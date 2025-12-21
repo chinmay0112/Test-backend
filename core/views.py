@@ -202,6 +202,13 @@ class SubmitTestView(APIView):
             test_result.is_completed = True
             test_result.time_remaining = 0
             test_result.save()
+
+            Notification.objects.create(
+                user=user,
+                title="Test Result Published",
+                message=f"You scored {score} in {test.title}. Check your detailed analysis now.",
+                notification_type="RESULT"
+            )
        
         # --- BUILD THE FINAL RESPONSE (Outside atomic block) ---
         serializer = TestResultDetailSerializer(test_result)
@@ -407,6 +414,13 @@ class VerifyPaymentView(APIView):
         user.pro_expiry_date = timezone.now() + timedelta(days=365)
         user.save()
 
+        Notification.objects.create(
+            user=user,
+            title="Upgrade Successful",
+            message="Congratulations! You are now a PRO member. You have unlimited access to all test series.",
+            notification_type="SYSTEM"
+        )
+
         return Response({"status": "success", "message": "Payment verified and user upgraded!"}, status=status.HTTP_200_OK)
     
 
@@ -590,7 +604,14 @@ class RegisterUserView(APIView):
             user = serializer.save(request) 
             
             # 6. CRITICAL: Delete/Clear OTP record so it cannot be used again
-            record.delete() 
+            record.delete()
+
+            Notification.objects.create(
+                user=user,
+                title="Welcome to PrepMaster!",
+                message=f"Hi {user.first_name}, your account has been created successfully. Start practicing now!",
+                notification_type="GENERAL"
+            ) 
             # OR record.otp = "" then record.save() if you want to keep the phone entry
             
             # 7. Generate Tokens
