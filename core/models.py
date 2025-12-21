@@ -59,6 +59,30 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         if self.pro_expiry_date and self.pro_expiry_date > timezone.now():
             return True
         return False
+    
+
+class Notification(models.Model):
+    TYPE_CHOICES = (
+        ('TEST', 'Test Series'),    # Blue/Book icon
+        ('RESULT', 'Result'),       # Green/Chart icon
+        ('SYSTEM', 'System Update'),# Orange/Cog icon
+        ('GENERAL', 'General'),     # Gray/Info icon
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='GENERAL')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at'] # Newest first
+
+    def __str__(self):
+        return f"{self.title} - {self.user.email}"
+
+
 class ExamName(models.Model):
     """Exam name is SSC, Bank etc"""
     name=models.CharField(max_length=100)

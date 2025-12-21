@@ -1,7 +1,8 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName, TestStage
+from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName, TestStage, Notification
+from django.utils.timesince import timesince
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
@@ -367,7 +368,35 @@ class TestResultListSerializer(serializers.ModelSerializer):
         fields = ['id', 'test_title', 'series_name', 'score', 'is_completed', 'completed_at']
 
 
-# core/serializers.py
+class NotificationSerializer(serializers.ModelSerializer):
+    time_ago = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
+    color = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'is_read', 'time_ago', 'icon', 'color', 'created_at']
+
+    def get_time_ago(self, obj):
+        return timesince(obj.created_at) + " ago"
+
+    def get_icon(self, obj):
+        icons = {
+            'TEST': 'pi pi-book',
+            'RESULT': 'pi pi-chart-bar',
+            'SYSTEM': 'pi pi-cog',
+            'GENERAL': 'pi pi-info-circle',
+        }
+        return icons.get(obj.notification_type, 'pi pi-bell')
+
+    def get_color(self, obj):
+        colors = {
+            'TEST': 'bg-indigo-100 text-indigo-600',
+            'RESULT': 'bg-green-100 text-green-600',
+            'SYSTEM': 'bg-orange-100 text-orange-600',
+            'GENERAL': 'bg-slate-100 text-slate-600',
+        }
+        return colors.get(obj.notification_type, 'bg-slate-100')
 
 class LeaderboardSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()

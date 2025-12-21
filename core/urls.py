@@ -1,6 +1,6 @@
 # core/urls.py
 from django.urls import path, include
-from .views import DashboardViewSet, SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
+from .views import MarkNotificationReadView,ClearNotificationsView , NotificationListView, DashboardViewSet, SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 from dj_rest_auth.registration.views import VerifyEmailView  # <--- IMPORT THIS
 from rest_framework.routers import DefaultRouter
 
@@ -20,6 +20,9 @@ path('payments/create-order/', CreateOrderView.as_view(), name='create-order'),
         path('auth/registration/verify-email/', VerifyEmailView.as_view(), name='rest_verify_email'),
 
     path('tests/<int:pk>/save-progress/', SaveTestProgressView.as_view(), name='save-progress'),
+    path('notifications/', NotificationListView.as_view(), name='notifications-list'),
+    path('notifications/mark-read/',MarkNotificationReadView.as_view(), name='notifications-mark-read'),
+    path('notifications/clear/', ClearNotificationsView.as_view(), name='notifications-clear'),
     path('results/<int:pk>/', TestResultDetailView.as_view()),
         path('results/', TestResultListView.as_view(), name='result-list'),  
         path('tests/<int:pk>/leaderboard/', TestLeaderboardView.as_view(), name='test-leaderboard'), 

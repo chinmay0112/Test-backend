@@ -3,8 +3,8 @@ from rest_framework import generics
 from rest_framework.decorators import action
 from django.db.models import Avg, Count, Sum
 from django.db.models import Count, Q, Case, When, IntegerField
-from .models import CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName,PhoneOTP, CustomUser
-from .serializers import CustomRegisterSerializer, ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
+from .models import Notification, CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName,PhoneOTP, CustomUser
+from .serializers import NotificationSerializer, CustomRegisterSerializer, ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions,viewsets
@@ -21,7 +21,28 @@ import random
 
 
 
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+class MarkNotificationReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        # Mark all as read
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({"status": "All marked as read"}, status=status.HTTP_200_OK)
+
+class ClearNotificationsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request):
+        # Delete all notifications for this user
+        Notification.objects.filter(user=request.user).delete()
+        return Response({"status": "Cleared"}, status=status.HTTP_200_OK)
 
 class ExamNameListView(generics.ListAPIView):
     """
