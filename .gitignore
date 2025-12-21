@@ -1,0 +1,10 @@
+# Secrets
+.env
+
+# Virtual Environment (You should never commit this)
+venv/
+env/
+
+# Python Cache (Junk files)
+__pycache__/
+*.pyc
