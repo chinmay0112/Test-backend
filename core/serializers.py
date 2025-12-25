@@ -74,7 +74,21 @@ class TestSeriesListSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d']
+        fields = [
+            'id', 
+            # English
+            'question_text', 
+            'option_a', 
+            'option_b', 
+            'option_c', 
+            'option_d',
+            # Hindi (New Fields)
+            'question_text_hi',
+            'option_a_hi',
+            'option_b_hi',
+            'option_c_hi',
+            'option_d_hi'
+        ]
 
 
 # LEVEL 2: A Section, which contains a list of Questions.
@@ -115,7 +129,26 @@ class UserResponseSerializer(serializers.ModelSerializer):
 class QuestionResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option','explanation','section']
+        fields = [
+            'id', 
+            # English
+            'question_text', 
+            'option_a', 
+            'option_b', 
+            'option_c', 
+            'option_d', 
+            'explanation',
+            # Hindi (New Fields)
+            'question_text_hi',
+            'option_a_hi',
+            'option_b_hi',
+            'option_c_hi',
+            'option_d_hi',
+            'explanation_hi',
+            # Meta
+            'correct_option', 
+            'section'
+        ]
 
 class CustomRegisterSerializer(RegisterSerializer):
     first_name = serializers.CharField(max_length=255, required=True)
