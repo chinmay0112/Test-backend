@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 import razorpay
+from django.db.models import Prefetch
 import requests,os
 from django.db import transaction
 from datetime import timedelta
@@ -58,9 +59,20 @@ class TestSeriesListView(generics.ListAPIView):
 
 class TestSeriesDetailView(generics.RetrieveAPIView):
     '''Returns specific list of test series like ssc mock1, ssc mock2'''
-    queryset = TestSeries.objects.all()
     serializer_class = TestSeriesDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # 1. Create a filter for Published Tests only
+        published_tests = Test.objects.filter(is_published=True)
+
+        # 2. Apply this filter to the nested 'stages' -> 'tests' relationship
+        return TestSeries.objects.prefetch_related(
+            Prefetch(
+                'stages__tests',          # Look inside 'stages', then 'tests'
+                queryset=published_tests  # Use the filtered list
+            )
+        )
 
 class QuestionListView(generics.ListAPIView):
     serializer_class = QuestionSerializer
@@ -77,6 +89,11 @@ class TestDetailView(generics.RetrieveAPIView):
     queryset = Test.objects.all()
     serializer_class = TestSectionSerializer
     permission_classes=[permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # SECURITY: Only allow access to published tests
+        # If is_published=False, Django returns 404 Not Found
+        return Test.objects.filter(is_published=True)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

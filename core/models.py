@@ -155,7 +155,7 @@ class Test(models.Model):
     is_free = models.BooleanField(default=False)    
     test_series = models.ForeignKey(TestSeries,on_delete=models.CASCADE)
     stage = models.ForeignKey(TestStage, related_name='tests', on_delete=models.CASCADE, null=True, blank=True)
-
+    is_published = models.BooleanField(default=False, help_text="Check this ONLY when questions are added")
     marks_correct = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     marks_incorrect = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     def __str__(self):
