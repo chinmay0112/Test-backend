@@ -32,6 +32,46 @@ class CustomUserManager(BaseUserManager):
         
         return self.create_user(first_name,last_name,email, phone, password, **extra_fields)
 
+from django.db import models
+
+class CurrentAffair(models.Model):
+    CATEGORY_CHOICES = [
+        ('NAT', 'National'),
+        ('INT', 'International'),
+        ('ECO', 'Economy'),
+        ('SPT', 'Sports'),
+        ('SCI', 'Science & Tech'),
+    ]
+
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+    summary = models.TextField(help_text="Short description for the card")
+    content = models.TextField(help_text="Full detail for the detail view")
+    
+    # Media
+    image_url = models.URLField(blank=True, null=True)
+    source_name = models.CharField(max_length=100, default="PIB")
+    source_link = models.URLField(blank=True, null=True)
+
+    # Exam Specifics
+    category = models.CharField(max_length=3, choices=CATEGORY_CHOICES)
+    is_hot_topic = models.BooleanField(default=False, help_text="Show in Hero Section")
+    tags = models.CharField(max_length=255, help_text="Comma separated tags e.g. #G20, #ISRO")
+    
+    # Meta
+    date = models.DateField(db_index=True) # Important for the Date Strip
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_published = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+
+    def __str__(self):
+        return f"{self.date} - {self.title}"
+
+
+
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
@@ -152,17 +192,25 @@ class Section(models.Model):
     
 
 class Question(models.Model):
-    section = models.ForeignKey(Section,related_name='questions',on_delete=models.CASCADE)
-    question_text = models.TextField()
-    option_a = models.CharField(max_length=255)
-    option_b = models.CharField(max_length=255)
-    option_c = models.CharField(max_length=255)
-    option_d = models.CharField(max_length=255)
-    correct_option = models.CharField(max_length=1,choices=[('a','A'), ('b','B'), ('c','C'), ('d','D')])
-    explanation = models.TextField(blank=True)
+    section = models.ForeignKey(Section, related_name='questions', on_delete=models.CASCADE)
+    
+    # English Content
+    question_text = models.TextField(verbose_name="Question (English)")
+    option_a = models.CharField(max_length=255, verbose_name="Option A (English)")
+    option_b = models.CharField(max_length=255, verbose_name="Option B (English)")
+    option_c = models.CharField(max_length=255, verbose_name="Option C (English)")
+    option_d = models.CharField(max_length=255, verbose_name="Option D (English)")
+    explanation = models.TextField(blank=True, verbose_name="Explanation (English)")
 
-    # class Meta:
-    #     ordering =['id']
+    # Hindi Content (Optional - use blank=True)
+    question_text_hi = models.TextField(blank=True, null=True, verbose_name="Question (Hindi)")
+    option_a_hi = models.CharField(max_length=255, blank=True, null=True, verbose_name="Option A (Hindi)")
+    option_b_hi = models.CharField(max_length=255, blank=True, null=True, verbose_name="Option B (Hindi)")
+    option_c_hi = models.CharField(max_length=255, blank=True, null=True, verbose_name="Option C (Hindi)")
+    option_d_hi = models.CharField(max_length=255, blank=True, null=True, verbose_name="Option D (Hindi)")
+    explanation_hi = models.TextField(blank=True, null=True, verbose_name="Explanation (Hindi)")
+
+    correct_option = models.CharField(max_length=1, choices=[('a','A'), ('b','B'), ('c','C'), ('d','D')])
 
     def __str__(self):
         return f"{self.section.test} - {self.section.name} - {self.question_text[:30]}..."

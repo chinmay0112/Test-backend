@@ -1,7 +1,7 @@
 # core/serializers.py
 from rest_framework import serializers
 # Make sure to import all your models, including Section
-from .models import CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName, TestStage, Notification
+from .models import CurrentAffair, CustomUser, TestResult, TestSeries, Test, Section, Question, ExamName, TestStage, Notification
 from django.utils.timesince import timesince
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from rest_framework.validators import UniqueValidator
@@ -10,6 +10,11 @@ from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncDate
+
+
+
+
+
 
 class ExamNameSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,6 +58,10 @@ class UserSerializer(serializers.ModelSerializer):
                     current_streak = 0
                 
             return current_streak
+
+
+
+
 
 
 class TestSeriesListSerializer(serializers.ModelSerializer):
