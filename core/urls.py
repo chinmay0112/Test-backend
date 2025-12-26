@@ -1,6 +1,6 @@
 # core/urls.py
 from django.urls import path, include
-from .views import MarkNotificationReadView,ClearNotificationsView , NotificationListView, DashboardViewSet, SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
+from .views import MarkNotificationReadView,ClearNotificationsView,VerifyCouponView , NotificationListView, DashboardViewSet, SendOTPView,VerifyOTPView,TestLeaderboardView, UserDetailView,TestResultDetailView,TestResultListView ,SaveTestProgressView,TestSeriesDetailView, TestSeriesListView,TestDetailView,SubmitTestView, QuestionListView, CompleteProfile, VerifyPaymentView,CreateOrderView, ExamNameListView
 from dj_rest_auth.registration.views import VerifyEmailView  # <--- IMPORT THIS
 from rest_framework.routers import DefaultRouter
 
@@ -28,6 +28,7 @@ path('payments/create-order/', CreateOrderView.as_view(), name='create-order'),
         path('tests/<int:pk>/leaderboard/', TestLeaderboardView.as_view(), name='test-leaderboard'), 
             path('auth/send-otp/', SendOTPView.as_view(), name='send-otp'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),  
+    path('verify-coupon/', VerifyCouponView.as_view(), name='verify-coupon'),
         path('', include(router.urls)),   # <--- ADDED THIS
 
 

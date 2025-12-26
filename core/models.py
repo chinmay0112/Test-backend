@@ -69,7 +69,32 @@ class CurrentAffair(models.Model):
     def __str__(self):
         return f"{self.date} - {self.title}"
 
+# core/models.py
+from django.db import models
+from django.utils import timezone
 
+class Coupon(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Amount to deduct in INR")
+    active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
+    
+    # Optional: Limit how many times a coupon can be used
+    usage_limit = models.IntegerField(default=100)
+    times_used = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.code
+
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        return (
+            self.active 
+            and self.valid_from <= now <= self.valid_to 
+            and self.times_used < self.usage_limit
+        )
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):

@@ -1,6 +1,6 @@
 # core/admin.py
 from django.contrib import admin
-from .models import CustomUser, PhoneOTP,ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
+from .models import Coupon, CustomUser, PhoneOTP,ExamName, TestSeries, Test, Section, Question, UserResponse, TestResult, TestStage
 from import_export.admin import ImportExportModelAdmin
 from .resources import QuestionResource
 from django.urls import path
@@ -146,7 +146,11 @@ admin.site.register(TestStage)
 admin.site.register(PhoneOTP)
 admin.site.register(CustomUser)
 
-
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_amount', 'active', 'valid_to', 'times_used']
+    list_filter = ['active', 'valid_to']
+    search_fields = ['code']
 
 @admin.register(Test)
 class TestAdmin(admin.ModelAdmin):

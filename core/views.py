@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.decorators import action
 from django.db.models import Avg, Count, Sum
 from django.db.models import Count, Q, Case, When, IntegerField
-from .models import Notification, CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName,PhoneOTP, CustomUser
+from .models import Coupon, Notification, CustomUser,Test, TestSeries, Question, TestResult, UserResponse, ExamName,PhoneOTP, CustomUser
 from .serializers import NotificationSerializer, CustomRegisterSerializer, ExamNameSerializer,TestResultListSerializer, TestSeriesListSerializer,TestResultDetailSerializer,QuestionSerializer, TestSectionSerializer, UserSerializer, LeaderboardSerializer,TestSeriesDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -20,7 +20,35 @@ from django.utils import timezone
 from django.conf import settings
 import random
 
+class VerifyCouponView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
+    def post(self, request):
+        code = request.data.get('code')
+        original_price = request.data.get('amount', 299) # Default to 299 if not sent
+
+        if not code:
+            return Response({"error": "Please enter a coupon code"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            coupon = Coupon.objects.get(code=code)
+        except Coupon.DoesNotExist:
+            return Response({"valid": False, "message": "Invalid Coupon Code"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not coupon.is_valid:
+            return Response({"valid": False, "message": "Coupon has expired or limit reached"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate new price
+        discount = float(coupon.discount_amount)
+        final_price = max(0, float(original_price) - discount)
+
+        return Response({
+            "valid": True,
+            "message": f"Coupon Applied! You saved ₹{discount}",
+            "discount_amount": discount,
+            "final_price": final_price,
+            "coupon_code": coupon.code
+        }, status=status.HTTP_200_OK)
 
 class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
@@ -372,13 +400,30 @@ class CreateOrderView(APIView):
     def post(self,request):
         user = request.user
         plan_id = request.data.get('plan_id')
+        coupon_code = request.data.get('coupon_code')
         amount = 0
         if plan_id == 'pro_yearly':
-            amount = 29900
+            amount = 299.00
        
         else:
             return Response({'error':'Invalid plan ID'}, status = status.HTTP_400_BAD_REQUEST)
         
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code)
+                if coupon.is_valid:
+                    amount = max(0, amount - float(coupon.discount_amount))
+                    # Optional: Increment usage here or in VerifyPaymentView
+                    # coupon.times_used += 1
+                    # coupon.save()
+                else:
+                    return Response({'error': 'Coupon is invalid or expired'}, status=status.HTTP_400_BAD_REQUEST)
+            except Coupon.DoesNotExist:
+                 return Response({'error': 'Invalid Coupon Code'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        amount_in_paise = int(amount * 100)
+
+
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         try:
             order=client.order.create({
