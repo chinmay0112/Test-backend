@@ -454,7 +454,7 @@ class VerifyPaymentView(APIView):
         payment_id = data.get('razorpay_payment_id')
         order_id = data.get('razorpay_order_id')
         signature = data.get('razorpay_signature')
-
+        coupon_code = data.get('coupon_code') # <--- NEW: Get coupon from request
         if not all([payment_id, order_id, signature]):
             return Response({"error": "Missing payment details"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -475,6 +475,15 @@ class VerifyPaymentView(APIView):
         user.is_pro_member = True # This grants the Pro status
         user.pro_expiry_date = timezone.now() + timedelta(days=365)
         user.save()
+
+        # 4. NEW: Increment Coupon Count
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code)
+                coupon.times_used += 1 # Increment
+                coupon.save()
+            except Coupon.DoesNotExist:
+                pass # Payment succeeded, so don't fail just because coupon code was weird
 
         Notification.objects.create(
             user=user,
