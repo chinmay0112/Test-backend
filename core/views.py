@@ -427,14 +427,14 @@ class CreateOrderView(APIView):
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         try:
             order=client.order.create({
-                "amount":amount,
+                "amount":amount_in_paise,
                 "currency":"INR",
                 "receipt":f"receipt_user_{user.id}_{plan_id}",
                 "payment_capture":1
             })
             return Response({
                 "order_id":order['id'],
-                "amount":amount,
+                "amount":amount_in_paise,
                 "currency":"INR",
                 'key_id': settings.RAZORPAY_KEY_ID, # Frontend needs this public key
                 'user_email': user.email,
